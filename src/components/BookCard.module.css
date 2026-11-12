@@ -3,8 +3,11 @@
   display: flex;
   flex-direction: column;
   background: var(--paper);
-  border: 1px solid var(--border);
+  border: 1px solid var(--ink);
   overflow: hidden;
+  border-color: var(--border);
+  border-radius: 22px;
+  box-shadow: 0 10px 28px #1d1d1f0b;
 }
 
 .cover,
@@ -18,8 +21,8 @@
   display: grid;
   place-items: center;
   padding: 15px;
-  background: #ead6d2;
-  color: var(--burgundy);
+  background: var(--rose);
+  color: var(--ink);
   font-family: var(--serif);
   font-size: 22px;
   text-align: center;
@@ -33,6 +36,7 @@
   font-family: var(--serif);
   font-size: 18px;
   margin: 0 0 5px;
+  letter-spacing: -0.3px;
 }
 
 .info p,
@@ -50,4 +54,7 @@
   padding: 5px 0;
   font-size: 11px;
   cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: .4px;
 }

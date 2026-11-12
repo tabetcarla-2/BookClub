@@ -1,11 +1,12 @@
 
 .page {
-  padding: 65px 0;
+  padding: 55px 0;
 }
 
 .page > h1 {
   font-family: var(--serif);
-  font-size: 55px;
+  font-size: 60px;
+  letter-spacing: -1.5px;
   font-weight: 400;
 }
 
@@ -21,6 +22,8 @@
   margin: 35px 0;
   background: var(--paper);
   border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: 0 12px 35px #1d1d1f0b;
 }
 
 .cover {
@@ -28,13 +31,14 @@
   height: 270px;
   flex-shrink: 0;
   padding: 30px 20px;
-  background: linear-gradient(145deg, #a86d65, #713d43);
-  color: #f9e9d8;
+  background: linear-gradient(145deg, #2c2c2f, #09090a);
+  color: #f6f6f7;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   text-align: center;
-  box-shadow: 5px 5px 12px #00000018;
+  box-shadow: 0 18px 35px #1d1d1f24;
+  border-radius: 12px;
 }
 
 .cover span {
@@ -100,6 +104,7 @@
   padding: 7px 10px;
   font-size: 10px;
   text-transform: capitalize;
+  border-radius: 999px;
 }
 
 .statuses .selectedStatus {
@@ -109,7 +114,9 @@
 
 .discussion {
   padding: 30px;
-  background: #eee6de;
+  background: var(--rose);
+  border: 1px solid var(--border);
+  border-radius: 24px;
 }
 
 @media (max-width: 650px) {

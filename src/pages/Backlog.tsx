@@ -36,7 +36,9 @@ function Backlog() {
 
       const ids = new Set((data ?? []).map((item) => item.book_id))
       const matchingBooks = catalog.filter((book) => ids.has(book.id))
-      if (matchingBooks.length > 0) setBooks(matchingBooks)
+      // Once Supabase is active, the database is the source of truth—even
+      // when the saved backlog is empty. The demo list is only for offline use.
+      setBooks(matchingBooks)
     }
 
     loadBacklog()

@@ -4,7 +4,7 @@
   display: grid;
   place-items: center;
   padding: 25px;
-  background: #eee1da;
+  background: var(--rose);
 }
 
 .card {
@@ -13,6 +13,8 @@
   background: var(--paper);
   text-align: center;
   border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px #1d1d1f18;
 }
 
 .symbol {
@@ -55,7 +57,8 @@
 .card input {
   padding: 14px;
   border: 1px solid var(--border);
-  background: #fffdf8;
+  background: var(--paper);
+  border-radius: 14px;
   outline: none;
   font-size: 12px;
 }

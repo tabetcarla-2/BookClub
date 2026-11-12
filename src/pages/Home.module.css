@@ -2,15 +2,18 @@
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 75px 8%;
-  margin: 45px 0 65px;
-  background: #eee1da;
-  border-radius: 4px;
+  padding: 88px 8%;
+  margin: 34px 0 65px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--rose) 100%);
+  border-radius: 32px;
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 45px #1d1d1f0d;
 }
 
 .hero h1 {
   font-family: var(--serif);
-  font-size: clamp(45px, 6vw, 70px);
+  font-size: clamp(45px, 6vw, 76px);
+  letter-spacing: -3px;
   line-height: 1.1;
   font-weight: 400;
   margin: 0 0 20px;
@@ -22,7 +25,7 @@
 
 .description {
   max-width: 420px;
-  color: #796d66;
+  color: #555550;
   font-size: 13px;
   line-height: 1.8;
   margin-bottom: 25px;
@@ -34,8 +37,8 @@
   top: 15%;
   font-family: var(--serif);
   font-size: 150px;
-  color: #c08c88;
-  opacity: 0.5;
+  color: var(--burgundy);
+  opacity: 0.35;
 }
 
 .section {
@@ -59,6 +62,9 @@
   background: var(--paper);
   border: 1px solid var(--border);
   padding: 25px;
+  min-height: 190px;
+  border-radius: 22px;
+  box-shadow: 0 8px 25px #1d1d1f08;
 }
 
 .card h3 {
@@ -76,6 +82,9 @@
   color: var(--burgundy);
   font-size: 12px;
   text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @media (max-width: 650px) {

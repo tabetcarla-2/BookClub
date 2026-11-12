@@ -1,13 +1,18 @@
 
 .header {
-  min-height: 82px;
-  padding: 0 6%;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: 72px;
+  padding: 0 5%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 25px;
-  background: var(--paper);
-  border-bottom: 1px solid var(--border);
+  gap: 30px;
+  background: #ffffffd9;
+  border-bottom: 1px solid #e5e5e780;
+  color: var(--ink);
+  backdrop-filter: saturate(180%) blur(18px);
 }
 
 .brand {
@@ -15,46 +20,76 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  font-family: var(--serif);
-  font-size: 21px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
   color: var(--ink);
   white-space: nowrap;
 }
 
 .symbol {
   color: var(--burgundy);
-  font-size: 26px;
+  font-size: 19px;
 }
 
 .navigation {
   display: flex;
   align-items: center;
   gap: 5px;
+  flex: 1;
+  justify-content: center;
 }
 
 .navLink {
-  padding: 10px 13px;
-  border-radius: 30px;
+  padding: 8px 11px;
+  border-radius: 999px;
   text-decoration: none;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
   transition: 0.2s;
   white-space: nowrap;
 }
 
 .navLink:hover,
 .active {
-  background: #f2e8e4;
-  color: var(--burgundy);
+  background: #f0f0f2;
+  color: var(--ink);
 }
 
-.note {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
+.account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.profileLink {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: var(--rose);
+  color: var(--ink);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.accountText { display: flex; flex-direction: column; gap: 2px; }
+.accountText strong { font-size: 11px; font-weight: 600; }
+.accountText small { color: var(--muted); font-size: 9px; }
+.signOut { border: 0; background: transparent; color: var(--muted); font-size: 18px; padding: 5px; }
+.signOut:hover { color: var(--burgundy); }
 
 @media (max-width: 900px) {
   .header {
@@ -67,7 +102,6 @@
     justify-content: center;
   }
 
-  .note {
-    display: none;
-  }
+  .header { gap: 16px; }
+  .accountText { display: none; }
 }

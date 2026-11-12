@@ -1,11 +1,12 @@
 
 .page {
-  padding: 65px 0;
+  padding: 55px 0;
 }
 
 .page h1 {
   font-family: var(--serif);
-  font-size: 55px;
+  font-size: 60px;
+  letter-spacing: -1.5px;
   font-weight: 400;
 }
 
@@ -33,6 +34,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  border-radius: 24px;
+  box-shadow: 0 10px 28px #1d1d1f0b;
 }
 
 .card > span {
@@ -54,16 +57,16 @@
   line-height: 1.6;
 }
 
-.pink { background: #f0dfdc; }
-.green { background: #e5eadf; }
-.yellow { background: #f0ead6; }
-.lilac { background: #e9e2eb; }
+.pink { background: linear-gradient(135deg, #fff, var(--rose)); }
+.green { background: #dce8e1; }
+.yellow { background: #f0e7bc; }
+.lilac { background: #e5e0ef; }
 
 .venueSection { margin-top: 55px; }
 .venueForm { display: flex; gap: 10px; margin: 20px 0; }
 .venueForm input { min-width: 0; flex: 1; padding: 13px; border: 1px solid var(--border); background: var(--paper); }
 .venues { display: grid; gap: 10px; }
-.venues article { padding: 20px; background: var(--paper); border: 1px solid var(--border); }
+.venues article { padding: 20px; background: var(--paper); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 7px 22px #1d1d1f08; }
 .venues h2 { margin-bottom: 5px; font-size: 22px; }
 .venues p, .venues small { color: var(--muted); font-size: 12px; }
 .error { color: #a33d43; font-size: 12px; }
