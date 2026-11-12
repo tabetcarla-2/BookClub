@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import type { Book } from '../types'
 import styles from './CurrentBook.module.css'
 
-const demoBook: Book = { id: 'demo-current', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', description: 'A story of love, ambition, wealth and the American Dream.' }
+const demoBook: Book = { id: 'demo-current', title: "A Husband's Secret", author: 'Liane Moriarty', description: 'A page-turning story about secrets, marriage, and the things we keep from the people closest to us.' }
 
 function CurrentBook() {
   const { user } = useAuth()

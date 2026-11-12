@@ -1,0 +1,16 @@
+.page { padding: 55px 0 80px; max-width: 900px; margin: 0 auto; }
+.page h1 { font-size: 60px; margin-bottom: 12px; }
+.page h1 em { color: var(--burgundy); font-style: normal; }
+.description { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.description strong { color: var(--ink); font-weight: 600; }
+.list { display: grid; gap: 12px; margin-top: 40px; }
+.member { display: grid; grid-template-columns: auto minmax(130px, .65fr) minmax(220px, 1fr); align-items: center; gap: 18px; padding: 20px 22px; background: var(--paper); border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 8px 24px #1d1d1f08; }
+.avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--rose); color: var(--burgundy); font-weight: 700; }
+.identity h2 { margin: 0 0 3px; font-size: 18px; }
+.identity p { margin: 0; color: var(--muted); font-size: 11px; }
+.progressLabel { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; }
+.progressLabel strong { color: var(--ink); font-weight: 500; }
+.track { height: 8px; overflow: hidden; border-radius: 99px; background: #eeeeF0; }
+.track span { display: block; height: 100%; border-radius: inherit; background: var(--burgundy); transition: width 500ms ease; }
+.empty { padding: 40px; text-align: center; color: var(--muted); background: var(--paper); border: 1px solid var(--border); border-radius: 22px; }
+@media (max-width: 650px) { .page h1 { font-size: 48px; } .member { grid-template-columns: auto 1fr; } .progressArea { grid-column: 1 / -1; } }

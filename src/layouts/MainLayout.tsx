@@ -13,7 +13,7 @@ function MainLayout() {
 
       <footer className="footer">
         <span>✳ the reading room</span>
-        <span>made with love & a little imagination ♡</span>
+        <span>made with love, Carla</span>
       </footer>
     </div>
   )

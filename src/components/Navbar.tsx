@@ -8,6 +8,7 @@ const links = [
   { name: 'Home', path: '/' },
   { name: 'Current Book', path: '/current-book' },
   { name: 'Backlog', path: '/backlog' },
+  { name: 'Members', path: '/members' },
   { name: 'Meetups', path: '/inspo' },
 ]
 

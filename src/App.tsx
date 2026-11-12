@@ -10,6 +10,7 @@ import CurrentBook from './pages/CurrentBook'
 import Backlog from './pages/Backlog'
 import Inspo from './pages/Inspo'
 import Login from './pages/Login'
+import Members from './pages/Members'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/members" element={<Members />} />
           <Route path="/current-book" element={<CurrentBook />} />
           <Route path="/backlog" element={<Backlog />} />
           <Route path="/inspo" element={<Inspo />} />
