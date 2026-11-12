@@ -32,11 +32,11 @@ function Login() {
     })
 
     if (error) {
-  console.error('Supabase login error:', error.message, error.status)
-  setError(error.message)
-  setLoading(false)
-  return
-}
+        console.error('Supabase login error:', error.message, error.status)
+        setError(error.message)
+        setLoading(false)
+        return
+        }
 
     navigate(redirectTo, { replace: true })
   }
