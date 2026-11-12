@@ -7,7 +7,7 @@ const links = [
   { name: 'My Page', path: '/profile' },
   { name: 'Current Book', path: '/current-book' },
   { name: 'Backlog', path: '/backlog' },
-  { name: 'Inspo', path: '/inspo' },
+  { name: 'Meetups', path: '/inspo' },
 ]
 
 function Navbar() {

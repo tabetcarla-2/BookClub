@@ -1,12 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '../types/database'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
+  ? createClient<Database>(supabaseUrl, supabaseKey)
   : null
-
-  console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase client connected:', !!supabase)

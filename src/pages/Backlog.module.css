@@ -52,6 +52,11 @@
   background: var(--paper);
 }
 
+.error {
+  color: #a33d43;
+  font-size: 12px;
+}
+
 @media (max-width: 750px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);

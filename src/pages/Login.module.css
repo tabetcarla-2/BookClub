@@ -73,6 +73,19 @@
   cursor: wait;
 }
 
+.modeToggle {
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--burgundy);
+  font-size: 11px;
+}
+
+.modeToggle:hover {
+  text-decoration: underline;
+}
+
 .error {
   color: #a33d43;
   font-size: 12px;

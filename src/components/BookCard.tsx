@@ -4,7 +4,7 @@ import styles from './BookCard.module.css'
 interface BookCardProps {
   title: string
   author: string
-  cover?: string
+  cover?: string | null
   description?: string
   onRemove?: () => void
 }

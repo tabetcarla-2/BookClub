@@ -59,8 +59,19 @@
 .yellow { background: #f0ead6; }
 .lilac { background: #e9e2eb; }
 
+.venueSection { margin-top: 55px; }
+.venueForm { display: flex; gap: 10px; margin: 20px 0; }
+.venueForm input { min-width: 0; flex: 1; padding: 13px; border: 1px solid var(--border); background: var(--paper); }
+.venues { display: grid; gap: 10px; }
+.venues article { padding: 20px; background: var(--paper); border: 1px solid var(--border); }
+.venues h2 { margin-bottom: 5px; font-size: 22px; }
+.venues p, .venues small { color: var(--muted); font-size: 12px; }
+.error { color: #a33d43; font-size: 12px; }
+
 @media (max-width: 600px) {
   .grid {
     grid-template-columns: 1fr;
   }
+
+  .venueForm { flex-direction: column; }
 }

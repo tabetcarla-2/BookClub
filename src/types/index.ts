@@ -3,8 +3,8 @@ export interface Profile {
   id: string
   username: string
   full_name: string
-  avatar_url?: string
-  bio?: string
+  avatar_url?: string | null
+  bio?: string | null
   created_at: string
 }
 
@@ -12,9 +12,9 @@ export interface Book {
   id: string
   title: string
   author: string
-  cover_url?: string
-  description?: string
-  isbn?: string
+  cover_url?: string | null
+  description?: string | null
+  isbn?: string | null
 }
 
 export interface BacklogItem {
@@ -30,7 +30,7 @@ export interface ReadingProgress {
   user_id: string
   book_id: string
   progress: number
-  status: 'want_to_read' | 'reading' | 'completed'
+  status: 'want_to_read' | 'reading' | 'paused' | 'skipping' | 'completed'
   updated_at: string
 }
 
