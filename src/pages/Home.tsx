@@ -26,26 +26,23 @@ function Home() {
       <section className={styles.section}>
         <h2>What's happening?</h2>
         <div className={styles.grid}>
-          <article className={styles.card}>
+          <Link to="/inspo" className={styles.card}>
             <p className="eyebrow">NEXT MEETUP</p>
             <h3>Where are we meeting?</h3>
-            <p>Find the next place to read, talk, and over-order coffee.</p>
-            <Link to="/inspo">See meetups →</Link>
-          </article>
+            <p>Got any places you want to try?</p>
+          </Link>
 
-          <article className={styles.card}>
+          <Link to="/members" className={styles.card}>
             <p className="eyebrow">THE SHAWTIES</p>
-            <h3>20 stunning readers</h3>
+            <h3>Our stunning readers</h3>
             <p>Comparison is said to be the thief of joy. Here, it is the motivation to read.</p>
-            <Link to="/members">Meet the readers →</Link>
-          </article>
+          </Link>
 
-          <article className={styles.card}>
+          <Link to="/backlog" className={styles.card}>
             <p className="eyebrow">THE NEXT READ?</p>
             <h3>Hate it? Love it? Add it.</h3>
             <p>Add books to our backlog.</p>
-            <Link to="/backlog">View your backlog →</Link>
-          </article>
+          </Link>
         </div>
       </section>
     </>
