@@ -1,0 +1,101 @@
+
+.page {
+  padding: 65px 0;
+}
+
+.page > h1 {
+  font-family: var(--serif);
+  font-size: 55px;
+  font-weight: 400;
+}
+
+.page > h1 em {
+  color: var(--burgundy);
+}
+
+.book {
+  display: flex;
+  align-items: center;
+  gap: 45px;
+  padding: 40px;
+  margin: 35px 0;
+  background: var(--paper);
+  border: 1px solid var(--border);
+}
+
+.cover {
+  width: 190px;
+  height: 270px;
+  flex-shrink: 0;
+  padding: 30px 20px;
+  background: linear-gradient(145deg, #a86d65, #713d43);
+  color: #f9e9d8;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+  box-shadow: 5px 5px 12px #00000018;
+}
+
+.cover span {
+  font-family: var(--serif);
+  font-size: 33px;
+  line-height: 1.15;
+}
+
+.cover small {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.info {
+  flex: 1;
+}
+
+.info h2,
+.discussion h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+}
+
+.info > p:not(.eyebrow) {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 30px;
+}
+
+.progressLabel strong {
+  color: var(--burgundy);
+}
+
+.info input {
+  width: 100%;
+  accent-color: var(--burgundy);
+  margin: 15px 0;
+}
+
+.discussion {
+  padding: 30px;
+  background: #eee6de;
+}
+
+@media (max-width: 650px) {
+  .book {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 25px;
+  }
+}

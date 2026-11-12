@@ -1,0 +1,53 @@
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.cover,
+.placeholder {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  padding: 15px;
+  background: #ead6d2;
+  color: var(--burgundy);
+  font-family: var(--serif);
+  font-size: 22px;
+  text-align: center;
+}
+
+.info {
+  padding: 16px;
+}
+
+.info h3 {
+  font-family: var(--serif);
+  font-size: 18px;
+  margin: 0 0 5px;
+}
+
+.info p,
+.info small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.remove {
+  display: block;
+  border: none;
+  background: none;
+  color: var(--burgundy);
+  padding: 5px 0;
+  font-size: 11px;
+  cursor: pointer;
+}
