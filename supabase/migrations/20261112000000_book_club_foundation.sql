@@ -29,6 +29,7 @@ create table if not exists public.books (
   title text not null,
   author text not null,
   cover_url text,
+  genre text,
   description text,
   isbn text,
   created_at timestamptz not null default now()
@@ -72,6 +73,17 @@ create table if not exists public.reading_progress (
   unique (user_id, book_id)
 );
 
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  book_id uuid not null references public.books(id) on delete cascade,
+  rating numeric(3, 2) not null check (rating between 0.25 and 5 and mod(rating * 4, 1) = 0),
+  comment text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, book_id)
+);
+
 create table if not exists public.venues (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs(id) on delete cascade,
@@ -110,7 +122,7 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
 
 do $$ declare table_name text; begin
-  foreach table_name in array array['profiles','clubs','club_members','books','club_books','backlog_items','backlog_votes','reading_progress','venues','events'] loop
+  foreach table_name in array array['profiles','clubs','club_members','books','club_books','backlog_items','backlog_votes','reading_progress','reviews','venues','events'] loop
     execute format('alter table public.%I enable row level security', table_name);
   end loop;
 end $$;
@@ -125,6 +137,7 @@ create policy "users manage their profile" on public.profiles for all to authent
 create policy "members read clubs" on public.clubs for select to authenticated using (public.is_club_member(id) or created_by = auth.uid());
 create policy "members read membership" on public.club_members for select to authenticated using (user_id = auth.uid() or public.is_club_member(club_id));
 create policy "members read books" on public.books for select to authenticated using (true);
+create policy "authenticated users add books" on public.books for insert to authenticated with check (true);
 create policy "members read club books" on public.club_books for select to authenticated using (public.is_club_member(club_id));
 create policy "members read backlog" on public.backlog_items for select to authenticated using (visibility = 'club' or user_id = auth.uid());
 create policy "users add backlog" on public.backlog_items for insert to authenticated with check (user_id = auth.uid());
@@ -132,6 +145,8 @@ create policy "users manage backlog" on public.backlog_items for delete to authe
 create policy "members read votes" on public.backlog_votes for select to authenticated using (user_id = auth.uid() or exists (select 1 from public.backlog_items b where b.id = backlog_item_id and b.visibility = 'club'));
 create policy "users manage votes" on public.backlog_votes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "users manage progress" on public.reading_progress for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "members read reviews" on public.reviews for select to authenticated using (true);
+create policy "users manage reviews" on public.reviews for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "members read venues" on public.venues for select to authenticated using (public.is_club_member(club_id));
 create policy "members suggest venues" on public.venues for insert to authenticated with check (suggested_by = auth.uid() and public.is_club_member(club_id));
 create policy "members read events" on public.events for select to authenticated using (public.is_club_member(club_id));

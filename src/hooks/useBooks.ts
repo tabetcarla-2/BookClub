@@ -35,24 +35,42 @@ export function useBooks() {
   const addBook = async (
     title: string,
     author: string,
-    cover_url?: string,
+    metadata: { cover_url?: string | null; genre?: string | null; description?: string | null; isbn?: string | null } = {},
   ) => {
     if (!supabase) {
       return { error: 'Supabase has not been configured.' }
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('books')
-      .insert({ title, author, cover_url })
+      .insert({ title, author, ...metadata })
       .select()
       .single()
 
-    if (error) {
-      return { error: error.message }
+    // Let book adding continue if the database migration has not been run yet.
+    // Genre will persist once the `genre` column is added in Supabase.
+    if (error?.message.toLowerCase().includes("'genre' column")) {
+      const legacyMetadata = {
+        cover_url: metadata.cover_url,
+        description: metadata.description,
+        isbn: metadata.isbn,
+      }
+      const retry = await supabase
+        .from('books')
+        .insert({ title, author, ...legacyMetadata })
+        .select()
+        .single()
+      data = retry.data
+      error = retry.error
     }
 
-    setBooks((previous) => [...previous, data])
-    return { error: null, data }
+    if (error || !data) {
+      return { error: error?.message ?? 'Could not add book.' }
+    }
+
+    const savedBook = data
+    setBooks((previous) => [...previous, savedBook])
+    return { error: null, data: savedBook }
   }
 
   useEffect(() => {

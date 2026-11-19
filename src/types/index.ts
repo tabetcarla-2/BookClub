@@ -13,6 +13,7 @@ export interface Book {
   title: string
   author: string
   cover_url?: string | null
+  genre?: string | null
   description?: string | null
   isbn?: string | null
 }

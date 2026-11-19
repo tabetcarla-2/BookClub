@@ -8,6 +8,21 @@
   border-color: var(--border);
   border-radius: 22px;
   box-shadow: 0 10px 28px #1d1d1f0b;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 34px #1d1d1f18;
+}
+
+.card[role='button'] {
+  cursor: pointer;
+}
+
+.card[role='button']:focus-visible {
+  outline: 2px solid var(--burgundy);
+  outline-offset: 4px;
 }
 
 .cover,
@@ -29,7 +44,10 @@
 }
 
 .info {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px;
 }
 
 .info h3 {
@@ -44,6 +62,54 @@
   color: var(--muted);
   font-size: 12px;
   line-height: 1.6;
+}
+
+.info .genre {
+  display: inline-block;
+  margin: 5px 0 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #744657;
+  background: #f5dfe7;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.info .romance { color: #a34e6d; background: #f8dce8; }
+.info .fantasy { color: #66528d; background: #e9e1f7; }
+.info .mystery { color: #48647b; background: #deedf4; }
+.info .history { color: #8a6736; background: #f5ead2; }
+.info .science { color: #3d756a; background: #def0eb; }
+.info .fiction { color: #744657; background: #f5dfe7; }
+
+.info .addedBy {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 2px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.expanded .description {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.readMore {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .remove {

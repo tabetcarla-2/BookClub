@@ -6,84 +6,233 @@ import { useBooks } from '../hooks/useBooks'
 import type { Book } from '../types'
 import styles from './Backlog.module.css'
 
-const demoBooks: Book[] = [
+type OpenLibraryDoc = {
+  key: string
+  title: string
+  author_name?: string[]
+  cover_i?: number
+  subject?: string[]
+  first_publish_year?: number
+  first_sentence?: string[] | string
+  isbn?: string[]
+}
+
+type OpenLibraryWork = { description?: string | { value?: string } }
+type GoogleVolume = {
+  volumeInfo?: {
+    title?: string
+    authors?: string[]
+    description?: string
+  }
+}
+
+type BacklogBook = Book & { addedBy?: string }
+
+const demoBooks: BacklogBook[] = [
   { id: 'demo-1', title: 'The Secret History', author: 'Donna Tartt' },
   { id: 'demo-2', title: 'Normal People', author: 'Sally Rooney' },
   { id: 'demo-3', title: 'Tomorrow, and Tomorrow, and Tomorrow', author: 'Gabrielle Zevin' },
   { id: 'demo-4', title: 'The Bell Jar', author: 'Sylvia Plath' },
 ]
 
+function coverUrl(coverId?: number) {
+  return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null
+}
+
+function cleanApiText(value?: string | null) {
+  const cleaned = value?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!cleaned || /^form:/i.test(cleaned) || /^nyt:/i.test(cleaned)) return null
+  return cleaned
+}
+
+function isMetadataText(value?: string | null) {
+  return Boolean(value && (/^form:/i.test(value) || /^nyt:/i.test(value) || /new york times bestseller/i.test(value)))
+}
+
+function toBook(doc: OpenLibraryDoc): Omit<Book, 'id'> {
+  const subjects = (doc.subject ?? []).filter((subject) => !isMetadataText(subject)).slice(0, 3)
+  const sentence = Array.isArray(doc.first_sentence) ? doc.first_sentence[0] : doc.first_sentence
+  const usableSentence = sentence && !isMetadataText(sentence) ? cleanApiText(sentence) : null
+  return {
+    title: doc.title,
+    author: doc.author_name?.[0] ?? 'Unknown author',
+    cover_url: coverUrl(doc.cover_i),
+    genre: subjects[0] ?? 'Literary fiction',
+    description: usableSentence ?? null,
+    isbn: doc.isbn?.[0] ?? null,
+  }
+}
+
+async function fetchGoogleDescription(book: Pick<Book, 'title' | 'author' | 'isbn'>) {
+  const queries = [
+    book.isbn ? `isbn:${book.isbn}` : null,
+    `${book.title} ${book.author}`,
+    `intitle:${book.title} inauthor:${book.author}`,
+  ].filter((query): query is string => Boolean(query))
+
+  for (const query of queries) {
+    try {
+      const params = new URLSearchParams({ q: query, maxResults: '10', projection: 'lite' })
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`)
+      if (!response.ok) continue
+      const result = await response.json() as { items?: GoogleVolume[] }
+      const description = result.items
+        ?.map((item) => item.volumeInfo?.description)
+        .map(cleanApiText)
+        .find((value): value is string => Boolean(value && !isMetadataText(value)))
+      if (description) return description
+    } catch {
+      // Try the next query/source. Book descriptions are optional in both APIs.
+    }
+  }
+
+  return null
+}
+
+async function withApiDescription(doc: OpenLibraryDoc): Promise<Omit<Book, 'id'>> {
+  const book = toBook(doc)
+  if (doc.key) {
+    try {
+      const response = await fetch(`https://openlibrary.org${doc.key}.json`)
+      if (response.ok) {
+        const work = await response.json() as OpenLibraryWork
+        const description = typeof work.description === 'string' ? work.description : work.description?.value
+        const cleaned = cleanApiText(description)
+        if (cleaned && !isMetadataText(cleaned)) return { ...book, description: cleaned }
+      }
+    } catch {
+      // Google Books below is the fallback when Open Library has no synopsis.
+    }
+  }
+
+  const googleDescription = await fetchGoogleDescription(book)
+  return { ...book, description: googleDescription ?? book.description }
+}
+
+async function refreshSavedDescription(book: Book): Promise<Book> {
+  try {
+    const params = new URLSearchParams({ q: `${book.title} ${book.author}`, limit: '1', fields: 'key,title,author_name,cover_i,subject,first_publish_year,first_sentence,isbn' })
+    const response = await fetch(`https://openlibrary.org/search.json?${params}`)
+    if (response.ok) {
+      const result = await response.json() as { docs?: OpenLibraryDoc[] }
+      const match = result.docs?.[0]
+      if (match) {
+        const apiBook = await withApiDescription(match)
+        return { ...book, description: apiBook.description ?? book.description, genre: apiBook.genre ?? book.genre, cover_url: book.cover_url ?? apiBook.cover_url }
+      }
+    }
+
+    const googleDescription = await fetchGoogleDescription(book)
+    return { ...book, description: googleDescription ?? book.description }
+  } catch {
+    const googleDescription = await fetchGoogleDescription(book)
+    return { ...book, description: googleDescription ?? book.description }
+  }
+}
+
 function Backlog() {
   const { user } = useAuth()
-  const { books: catalog, addBook } = useBooks()
+  const { books: catalog, loading: catalogLoading, addBook } = useBooks()
   const [bookTitle, setBookTitle] = useState('')
-  const [books, setBooks] = useState<Book[]>(demoBooks)
+  const [books, setBooks] = useState<BacklogBook[]>(demoBooks)
+  const [suggestions, setSuggestions] = useState<OpenLibraryDoc[]>([])
+  const [searching, setSearching] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadBacklog() {
-      if (!supabase || !user) return
-      const { data, error: fetchError } = await supabase
-        .from('backlog_items')
-        .select('book_id')
-        .or(`user_id.eq.${user.id},visibility.eq.club`)
-
-      if (fetchError) {
-        setError(fetchError.message)
-        return
-      }
-
+      if (!supabase || !user || catalogLoading) return
+      const [{ data, error: fetchError }, { data: profiles }] = await Promise.all([
+        supabase.from('backlog_items').select('book_id, user_id').or(`user_id.eq.${user.id},visibility.eq.club`),
+        supabase.from('profiles').select('id, full_name, username'),
+      ])
+      if (fetchError) { setError(fetchError.message); return }
       const ids = new Set((data ?? []).map((item) => item.book_id))
-      const matchingBooks = catalog.filter((book) => ids.has(book.id))
-      // Once Supabase is active, the database is the source of truth—even
-      // when the saved backlog is empty. The demo list is only for offline use.
-      setBooks(matchingBooks)
+      const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name || `@${profile.username}`]))
+      const contributors = new Map<string, string[]>()
+      for (const item of data ?? []) {
+        const current = contributors.get(item.book_id) ?? []
+        const name = names.get(item.user_id) ?? 'a member'
+        if (!current.includes(name)) current.push(name)
+        contributors.set(item.book_id, current)
+      }
+      const savedBooks = catalog.filter((book) => ids.has(book.id))
+      const enrichedBooks = await Promise.all(savedBooks.map(refreshSavedDescription))
+      if (cancelled) return
+      setBooks(enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })))
     }
-
     loadBacklog()
-  }, [catalog, user])
 
-  async function addBookToBacklog() {
-    const title = bookTitle.trim()
-    if (!title || saving) return
+    return () => { cancelled = true }
+  }, [catalog, catalogLoading, user])
+
+  useEffect(() => {
+    const query = bookTitle.trim()
+    if (query.length < 2) { setSuggestions([]); return }
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      setSearching(true)
+      try {
+        const params = new URLSearchParams({ q: query, limit: '6', fields: 'key,title,author_name,cover_i,subject,first_publish_year,first_sentence,isbn' })
+        const response = await fetch(`https://openlibrary.org/search.json?${params}`, { signal: controller.signal })
+        if (!response.ok) throw new Error('Book search is unavailable right now.')
+        const result = await response.json() as { docs?: OpenLibraryDoc[] }
+        setSuggestions(result.docs ?? [])
+      } catch (searchError) {
+        if (searchError instanceof DOMException && searchError.name === 'AbortError') return
+        setError(searchError instanceof Error ? searchError.message : 'Book search is unavailable right now.')
+      } finally { setSearching(false) }
+    }, 350)
+    return () => { controller.abort(); window.clearTimeout(timer) }
+  }, [bookTitle])
+
+  async function addBookToBacklog(suggestion?: OpenLibraryDoc) {
+    const metadata = suggestion ? await withApiDescription(suggestion) : { title: bookTitle.trim(), author: 'Author to be added' }
+    if (!metadata.title || saving) return
     setSaving(true)
     setError('')
 
     if (!supabase || !user) {
-      setBooks((previous) => [...previous, { id: `demo-${Date.now()}`, title, author: 'Author to be added' }])
-      setBookTitle('')
-      setSaving(false)
-      return
+      setBooks((previous) => [...previous, { id: `demo-${Date.now()}`, ...metadata }])
+      setBookTitle(''); setSuggestions([]); setSaving(false); return
     }
 
-    const existing = catalog.find((book) => book.title.toLowerCase() === title.toLowerCase())
-    const bookResult = existing
-      ? { data: existing, error: null }
-      : await addBook(title, 'Author to be added')
-
-    if (bookResult.error || !bookResult.data) {
-      setError(bookResult.error ?? 'Could not add that book.')
-      setSaving(false)
-      return
+    // Older accounts may not have a profile row yet, but backlog_items has a
+    // foreign key to profiles.id. Create it before adding the recommendation.
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()
+    if (!profile) {
+      const username = user.user_metadata?.username || `reader_${user.id.replaceAll('-', '').slice(0, 10)}`
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: user.id,
+        username,
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Reader',
+      })
+      if (profileError && profileError.code !== '23505') {
+        setError(profileError.message)
+        setSaving(false)
+        return
+      }
     }
 
-    const { error: insertError } = await supabase.from('backlog_items').insert({
-      user_id: user.id,
-      book_id: bookResult.data.id,
-      visibility: 'club',
-    })
+    const existing = catalog.find((book) => book.title.toLowerCase() === metadata.title.toLowerCase())
+    const bookResult = existing ? { data: existing, error: null } : await addBook(metadata.title, metadata.author, metadata)
+    if (bookResult.error || !bookResult.data) { setError(bookResult.error ?? 'Could not add that book.'); setSaving(false); return }
+    const addedBook = bookResult.data
 
+    const { error: insertError } = await supabase.from('backlog_items').insert({ user_id: user.id, book_id: addedBook.id, visibility: 'club' })
     if (insertError && insertError.code !== '23505') setError(insertError.message)
-    else setBooks((previous) => [...previous.filter((book) => book.id !== bookResult.data.id), bookResult.data])
-    setBookTitle('')
-    setSaving(false)
+    else {
+      const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'you'
+      setBooks((previous) => [...previous.filter((book) => book.id !== addedBook.id), { ...addedBook, addedBy: displayName }])
+    }
+    setBookTitle(''); setSuggestions([]); setSaving(false)
   }
 
-  async function removeBook(book: Book) {
-    if (supabase && user && !book.id.startsWith('demo-')) {
-      await supabase.from('backlog_items').delete().eq('book_id', book.id).eq('user_id', user.id)
-    }
+  async function removeBook(book: BacklogBook) {
+    if (supabase && user && !book.id.startsWith('demo-')) await supabase.from('backlog_items').delete().eq('book_id', book.id).eq('user_id', user.id)
     setBooks((previous) => previous.filter((item) => item.id !== book.id))
   }
 
@@ -91,16 +240,14 @@ function Backlog() {
     <section className={styles.page}>
       <p className="eyebrow">THE NEVER-ENDING LIST</p>
       <h1>Books to <em>discover.</em></h1>
-      <p className={styles.description}>All the stories waiting for their turn on your bookshelf.</p>
-
-      <div className={styles.form}>
-        <input type="text" placeholder="Add a book to your TBR..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} />
-        <button className="primary-button" onClick={addBookToBacklog} disabled={saving}>{saving ? 'Adding...' : '+ Add book'}</button>
+      <p className={styles.description}>Search the library, find the one, and add it to the club backlog.</p>
+      <div className={styles.searchArea}>
+        <div className={styles.form}><input type="search" placeholder="Search by title, author, or ISBN..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} /><button className="primary-button" onClick={() => addBookToBacklog()} disabled={saving}>{saving ? 'Adding...' : '+ Add book'}</button></div>
+        {(searching || suggestions.length > 0) && <div className={styles.suggestions} aria-live="polite">{searching && <p className={styles.searchMessage}>Searching Open Library...</p>}{suggestions.map((suggestion) => { const metadata = toBook(suggestion); return <button type="button" className={styles.suggestion} key={suggestion.key} onClick={() => addBookToBacklog(suggestion)}><span className={styles.suggestionCover}>{metadata.cover_url ? <img src={metadata.cover_url} alt="" /> : '—'}</span><span><strong>{metadata.title}</strong><small>{metadata.author} · {metadata.genre}</small></span><span className={styles.addIcon}>+</span></button> })}</div>}
       </div>
-
       {error && <p className={styles.error}>{error}</p>}
       <p className="eyebrow">{books.length} BOOKS ON YOUR LIST</p>
-      {books.length > 0 ? <div className={styles.grid}>{books.map((book) => <BookCard key={book.id} title={book.title} author={book.author} cover={book.cover_url} onRemove={() => removeBook(book)} />)}</div> : <p className={styles.empty}>Your reading list is empty. Time to discover something new!</p>}
+      {books.length > 0 ? <div className={styles.grid}>{books.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} />)}</div> : <p className={styles.empty}>Your reading list is empty. Search above to find your next read.</p>}
     </section>
   )
 }

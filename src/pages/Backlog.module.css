@@ -25,6 +25,8 @@
   margin: 35px 0;
 }
 
+.searchArea { position: relative; margin: 35px 0; }
+
 .form input {
   flex: 1;
   min-width: 0;
@@ -41,6 +43,42 @@
 .form input:focus {
   border-color: var(--burgundy);
 }
+
+.suggestions {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 112px;
+  padding: 8px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 16px 35px #1d1d1f18;
+}
+
+.suggestion {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.suggestion:hover { background: var(--cream); }
+.suggestionCover { display: grid; place-items: center; width: 38px; height: 48px; overflow: hidden; border-radius: 5px; background: var(--rose); color: var(--muted); font-size: 12px; }
+.suggestionCover img { width: 100%; height: 100%; object-fit: cover; }
+.suggestion strong, .suggestion small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggestion strong { font-size: 12px; }
+.suggestion small { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.addIcon { color: var(--burgundy); font-size: 22px; }
+.searchMessage { margin: 8px; color: var(--muted); font-size: 11px; }
 
 .grid {
   display: grid;
@@ -77,4 +115,6 @@
   .form {
     flex-direction: column;
   }
+
+  .suggestions { right: 0; }
 }
