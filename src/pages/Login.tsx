@@ -57,9 +57,7 @@ function Login() {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
-        <span className={styles.symbol}>✳</span>
-
-        <p className="eyebrow">YOUR LITTLE CORNER OF THE INTERNET</p>
+        <p className={styles.kicker}>NYC BOOK CLUB</p>
 
         <h1>{mode === 'sign-in' ? <>Welcome <em>back.</em></> : <>Join the <em>club.</em></>}</h1>
 
@@ -140,9 +138,6 @@ function Login() {
           {mode === 'sign-in' ? 'New here? Create an account' : 'Already a member? Sign in'}
         </button>
 
-        <p className={styles.note}>
-          A private space for our little book club ♡
-        </p>
       </div>
     </main>
   )

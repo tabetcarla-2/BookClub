@@ -1,100 +1,66 @@
-
 .page {
-  min-height: 100vh;
+  position: relative;
   display: grid;
+  min-height: 100vh;
   place-items: center;
-  padding: 25px;
-  background: var(--rose);
+  padding: 42px 20px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgb(23 18 14 / .82), rgb(23 18 14 / .34)), url('../assets/nyc-hero.png') center / cover;
+}
+
+.page::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 125px;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--cream));
 }
 
 .card {
-  width: min(100%, 430px);
-  padding: 45px;
-  background: var(--paper);
-  text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  box-shadow: 0 20px 50px #1d1d1f18;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 438px);
+  padding: 42px 44px 34px;
+  border: 1px solid rgb(255 255 255 / .55);
+  border-radius: 22px;
+  background: rgb(255 250 246 / .96);
+  box-shadow: 0 25px 70px rgb(25 16 12 / .28);
 }
 
-.symbol {
-  display: block;
+.kicker {
+  margin: 0 0 17px;
   color: var(--burgundy);
-  font-size: 35px;
-  margin-bottom: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
 }
 
 .card h1 {
+  margin: 0 0 10px;
+  color: var(--ink);
   font-family: var(--serif);
-  font-size: 45px;
+  font-size: clamp(42px, 8vw, 56px);
   font-weight: 400;
-  margin-bottom: 10px;
+  letter-spacing: -.055em;
+  line-height: .98;
 }
 
-.card h1 em {
-  color: var(--burgundy);
-}
-
-.description,
-.note {
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-.card form {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  margin-top: 30px;
-}
-
-.card label {
-  font-size: 11px;
-  margin: 15px 0 8px;
-}
-
-.card input {
-  padding: 14px;
-  border: 1px solid var(--border);
-  background: var(--paper);
-  border-radius: 14px;
-  outline: none;
-  font-size: 12px;
-}
-
-.card input:focus {
-  border-color: var(--burgundy);
-}
-
-.card button {
-  margin-top: 25px;
-}
-
-.card button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.modeToggle {
-  margin-top: 18px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--burgundy);
-  font-size: 11px;
-}
-
-.modeToggle:hover {
-  text-decoration: underline;
-}
-
-.error {
-  color: #a33d43;
-  font-size: 12px;
-  margin-top: 15px;
-}
-
-.note {
-  margin-top: 25px;
-}
+.card h1 em { color: var(--burgundy); font-style: italic; }
+.description, .note { color: var(--muted); font-size: 12px; line-height: 1.65; }
+.description { max-width: 300px; margin: 0; }
+.card form { display: flex; flex-direction: column; margin-top: 27px; }
+.card label { margin: 14px 0 7px; color: #5f514b; font-size: 10px; font-weight: 600; letter-spacing: .15px; }
+.card input { width: 100%; padding: 13px 14px; border: 1px solid #d9ccc4; border-radius: 10px; outline: 0; background: #fffdfb; color: var(--ink); font: inherit; font-size: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
+.card input::placeholder { color: #a79b94; }
+.card input:focus { border-color: var(--burgundy); box-shadow: 0 0 0 3px #8d25271a; }
+.card form button { width: 100%; margin-top: 24px; justify-content: center; border-radius: 999px; background: var(--burgundy); }
+.card form button:hover { background: #732023; }
+.card button:disabled { cursor: wait; opacity: .6; }
+.modeToggle { display: block; margin: 20px auto 0; padding: 0; border: 0; background: transparent; color: var(--burgundy); font-size: 11px; cursor: pointer; }
+.modeToggle:hover { text-decoration: underline; }
+.error { margin: 14px 0 0; color: #a33d43; font-size: 11px; line-height: 1.4; }
+.note { margin: 23px 0 0; text-align: center; }
+@media (max-width: 520px) { .page { padding: 24px 14px; } .card { padding: 34px 25px 28px; } }
