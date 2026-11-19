@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import BookCard from '../components/BookCard'
+import BookCard, { type BookComment, type BookInteraction } from '../components/BookCard'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useBooks } from '../hooks/useBooks'
@@ -27,6 +27,9 @@ type GoogleVolume = {
 }
 
 type BacklogBook = Book & { addedBy?: string }
+type VoteRow = { book_id: string; user_id: string; vote: 1 | -1 }
+type ReadRow = { book_id: string; user_id: string }
+type CommentRow = { id: string; book_id: string; user_id: string; content: string; created_at: string }
 
 const demoBooks: BacklogBook[] = [
   { id: 'demo-1', title: 'The Secret History', author: 'Donna Tartt' },
@@ -139,6 +142,15 @@ function Backlog() {
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [selectedGenre, setSelectedGenre] = useState('all')
+  const [interactions, setInteractions] = useState<Record<string, BookInteraction>>({})
+
+  const genreOptions = Array.from(
+    new Set(books.map((book) => book.genre?.trim()).filter((genre): genre is string => Boolean(genre))),
+  ).sort((a, b) => a.localeCompare(b))
+  const filteredBooks = selectedGenre === 'all'
+    ? books
+    : books.filter((book) => book.genre?.trim() === selectedGenre)
 
   useEffect(() => {
     let cancelled = false
@@ -161,8 +173,34 @@ function Backlog() {
       }
       const savedBooks = catalog.filter((book) => ids.has(book.id))
       const enrichedBooks = await Promise.all(savedBooks.map(refreshSavedDescription))
+      const bookIds = savedBooks.map((book) => book.id)
+      const [voteResult, readResult, commentResult] = bookIds.length > 0
+        ? await Promise.all([
+          supabase.from('book_votes').select('book_id, user_id, vote').in('book_id', bookIds),
+          supabase.from('book_reads').select('book_id, user_id').in('book_id', bookIds),
+          supabase.from('book_comments').select('id, book_id, user_id, content, created_at').in('book_id', bookIds).order('created_at', { ascending: true }),
+        ])
+        : [{ data: [] as VoteRow[] }, { data: [] as ReadRow[] }, { data: [] as CommentRow[] }]
+      const votes = (voteResult.data ?? []) as VoteRow[]
+      const reads = (readResult.data ?? []) as ReadRow[]
+      const comments = (commentResult.data ?? []) as CommentRow[]
+      const interactionMap: Record<string, BookInteraction> = {}
+      for (const book of savedBooks) {
+        const bookVotes = votes.filter((vote) => vote.book_id === book.id)
+        const bookReads = reads.filter((read) => read.book_id === book.id)
+        const bookComments = comments.filter((comment) => comment.book_id === book.id)
+        interactionMap[book.id] = {
+          upvotes: bookVotes.filter((vote) => vote.vote === 1).length,
+          downvotes: bookVotes.filter((vote) => vote.vote === -1).length,
+          userVote: bookVotes.find((vote) => vote.user_id === user.id)?.vote ?? null,
+          readByMe: bookReads.some((read) => read.user_id === user.id),
+          readers: bookReads.map((read) => names.get(read.user_id) ?? 'a member'),
+          comments: bookComments.map((comment): BookComment => ({ id: comment.id, content: comment.content, author: names.get(comment.user_id) ?? 'a member', createdAt: comment.created_at, isMine: comment.user_id === user.id })),
+        }
+      }
       if (cancelled) return
       setBooks(enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })))
+      setInteractions(interactionMap)
     }
     loadBacklog()
 
@@ -234,6 +272,75 @@ function Backlog() {
   async function removeBook(book: BacklogBook) {
     if (supabase && user && !book.id.startsWith('demo-')) await supabase.from('backlog_items').delete().eq('book_id', book.id).eq('user_id', user.id)
     setBooks((previous) => previous.filter((item) => item.id !== book.id))
+    setInteractions((previous) => {
+      const next = { ...previous }
+      delete next[book.id]
+      return next
+    })
+  }
+
+  function memberName() {
+    return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'you'
+  }
+
+  async function voteOnBook(bookId: string, vote: 1 | -1) {
+    if (!supabase || !user) return
+    const current = interactions[bookId]
+    const nextVote = current?.userVote === vote ? null : vote
+    const result = nextVote
+      ? await supabase.from('book_votes').upsert({ book_id: bookId, user_id: user.id, vote: nextVote })
+      : await supabase.from('book_votes').delete().eq('book_id', bookId).eq('user_id', user.id)
+    if (result.error) { setError(result.error.message); return }
+    setInteractions((previous) => {
+      const existing = previous[bookId]
+      if (!existing) return previous
+      let upvotes = existing.upvotes
+      let downvotes = existing.downvotes
+      if (existing.userVote === 1) upvotes -= 1
+      if (existing.userVote === -1) downvotes -= 1
+      if (nextVote === 1) upvotes += 1
+      if (nextVote === -1) downvotes += 1
+      return { ...previous, [bookId]: { ...existing, upvotes, downvotes, userVote: nextVote } }
+    })
+  }
+
+  async function toggleRead(bookId: string) {
+    if (!supabase || !user) return
+    const current = interactions[bookId]
+    const readByMe = current?.readByMe ?? false
+    const result = readByMe
+      ? await supabase.from('book_reads').delete().eq('book_id', bookId).eq('user_id', user.id)
+      : await supabase.from('book_reads').insert({ book_id: bookId, user_id: user.id })
+    if (result.error) { setError(result.error.message); return }
+    setInteractions((previous) => {
+      const existing = previous[bookId]
+      if (!existing) return previous
+      const readers = readByMe ? existing.readers.filter((reader) => reader !== memberName()) : [...existing.readers, memberName()]
+      return { ...previous, [bookId]: { ...existing, readByMe: !readByMe, readers } }
+    })
+  }
+
+  async function addComment(bookId: string, content: string) {
+    if (!supabase || !user) return
+    const { data, error: commentError } = await supabase.from('book_comments').insert({ book_id: bookId, user_id: user.id, content }).select('id, content, created_at').single()
+    if (commentError || !data) { setError(commentError?.message ?? 'Could not add comment.'); return }
+    const comment: BookComment = { id: data.id, content: data.content, author: memberName(), createdAt: data.created_at }
+    setInteractions((previous) => {
+      const existing = previous[bookId]
+      if (!existing) return previous
+      return { ...previous, [bookId]: { ...existing, comments: [...existing.comments, comment] } }
+    })
+  }
+
+  async function deleteComment(bookId: string, commentId: string) {
+    if (!supabase || !user) return
+    const { error: deleteError } = await supabase.from('book_comments').delete().eq('id', commentId).eq('user_id', user.id)
+    if (deleteError) { setError(deleteError.message); return }
+    setInteractions((previous) => {
+      const existing = previous[bookId]
+      if (!existing) return previous
+      return { ...previous, [bookId]: { ...existing, comments: existing.comments.filter((comment) => comment.id !== commentId) } }
+    })
   }
 
   return (
@@ -246,8 +353,25 @@ function Backlog() {
         {(searching || suggestions.length > 0) && <div className={styles.suggestions} aria-live="polite">{searching && <p className={styles.searchMessage}>Searching Open Library...</p>}{suggestions.map((suggestion) => { const metadata = toBook(suggestion); return <button type="button" className={styles.suggestion} key={suggestion.key} onClick={() => addBookToBacklog(suggestion)}><span className={styles.suggestionCover}>{metadata.cover_url ? <img src={metadata.cover_url} alt="" /> : '—'}</span><span><strong>{metadata.title}</strong><small>{metadata.author} · {metadata.genre}</small></span><span className={styles.addIcon}>+</span></button> })}</div>}
       </div>
       {error && <p className={styles.error}>{error}</p>}
-      <p className="eyebrow">{books.length} BOOKS ON YOUR LIST</p>
-      {books.length > 0 ? <div className={styles.grid}>{books.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} />)}</div> : <p className={styles.empty}>Your reading list is empty. Search above to find your next read.</p>}
+      <div className={styles.listHeader}>
+        <p className="eyebrow">{filteredBooks.length} OF {books.length} BOOKS ON YOUR LIST</p>
+        {genreOptions.length > 0 && (
+          <label className={styles.filter}>
+            <span>Filter by genre</span>
+            <select value={selectedGenre} onChange={(event) => setSelectedGenre(event.target.value)}>
+              <option value="all">All genres</option>
+              {genreOptions.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      {books.length === 0 ? (
+        <p className={styles.empty}>Your reading list is empty. Search above to find your next read.</p>
+      ) : filteredBooks.length > 0 ? (
+        <div className={styles.grid}>{filteredBooks.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} interaction={user ? interactions[book.id] : undefined} onVote={(vote) => voteOnBook(book.id, vote)} onToggleRead={() => toggleRead(book.id)} onAddComment={(content) => addComment(book.id, content)} onDeleteComment={(commentId) => deleteComment(book.id, commentId)} />)}</div>
+      ) : (
+        <p className={styles.empty}>No books in this genre yet. Try another filter.</p>
+      )}
     </section>
   )
 }

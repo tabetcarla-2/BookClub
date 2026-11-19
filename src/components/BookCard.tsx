@@ -10,6 +10,28 @@ interface BookCardProps {
   description?: string | null
   addedBy?: string
   onRemove?: () => void
+  interaction?: BookInteraction
+  onVote?: (vote: 1 | -1) => void | Promise<void>
+  onToggleRead?: () => void | Promise<void>
+  onAddComment?: (content: string) => void | Promise<void>
+  onDeleteComment?: (commentId: string) => void | Promise<void>
+}
+
+export interface BookComment {
+  id: string
+  content: string
+  author: string
+  createdAt: string
+  isMine?: boolean
+}
+
+export interface BookInteraction {
+  upvotes: number
+  downvotes: number
+  userVote: 1 | -1 | null
+  readByMe: boolean
+  readers: string[]
+  comments: BookComment[]
 }
 
 function BookCard({
@@ -20,8 +42,15 @@ function BookCard({
   description,
   addedBy,
   onRemove,
+  interaction,
+  onVote,
+  onToggleRead,
+  onAddComment,
+  onDeleteComment,
 }: BookCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [commenting, setCommenting] = useState(false)
   const displayDescription = description && !/^form:|^nyt:|new york times bestseller/i.test(description) ? description : null
   const displayGenre = genre && !/^form:|^nyt:|new york times bestseller/i.test(genre) ? genre : null
   const genreText = displayGenre?.toLowerCase() ?? ''
@@ -43,7 +72,7 @@ function BookCard({
     <article
       className={`${styles.card} ${expanded ? styles.expanded : ''}`}
       onClick={(event) => {
-        if ((event.target as HTMLElement).closest('button')) return
+        if ((event.target as HTMLElement).closest('button, input, textarea, select')) return
         toggleExpanded()
       }}
       onKeyDown={handleCardKeyDown}
@@ -77,6 +106,48 @@ function BookCard({
             {displayDescription}
             {!expanded && <span className={styles.readMore}> Read more</span>}
           </small>
+        )}
+
+        {interaction && (
+          <div className={styles.social} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.socialRow}>
+              <div className={styles.voteGroup} aria-label="Book votes">
+                <button type="button" className={`${styles.voteButton} ${interaction.userVote === 1 ? styles.activeVote : ''}`} onClick={() => onVote?.(1)} aria-label="Upvote" aria-pressed={interaction.userVote === 1}>↑ <span>{interaction.upvotes}</span></button>
+                <button type="button" className={`${styles.voteButton} ${interaction.userVote === -1 ? styles.activeDownvote : ''}`} onClick={() => onVote?.(-1)} aria-label="Downvote" aria-pressed={interaction.userVote === -1}>↓ <span>{interaction.downvotes}</span></button>
+              </div>
+              <button type="button" className={`${styles.readButton} ${interaction.readByMe ? styles.read : ''}`} onClick={() => onToggleRead?.()} aria-label={interaction.readByMe ? 'Remove read flag' : 'Mark as read'} aria-pressed={interaction.readByMe}>
+                <span className={styles.flag} aria-hidden="true">⚑</span> {interaction.readByMe ? 'Read' : 'Mark read'}
+              </button>
+            </div>
+
+            {interaction.readers.length > 0 && <small className={styles.readers}>Read by {interaction.readers.join(', ')}</small>}
+
+            <div className={styles.comments}>
+              {interaction.comments.map((comment) => (
+                <p className={styles.comment} key={comment.id}>
+                  <span><strong>{comment.author}</strong> {comment.content}</span>
+                  {comment.isMine && onDeleteComment && <button type="button" className={styles.deleteComment} onClick={() => onDeleteComment(comment.id)} aria-label="Delete comment">×</button>}
+                </p>
+              ))}
+              {onAddComment && (
+                <form className={styles.commentForm} onSubmit={async (event) => {
+                  event.preventDefault()
+                  const content = commentText.trim()
+                  if (!content || commenting) return
+                  setCommenting(true)
+                  try {
+                    await onAddComment(content)
+                    setCommentText('')
+                  } finally {
+                    setCommenting(false)
+                  }
+                }}>
+                  <input value={commentText} onChange={(event) => setCommentText(event.target.value)} maxLength={500} placeholder="Add a comment..." aria-label={`Comment on ${title}`} />
+                  <button type="submit" disabled={!commentText.trim() || commenting}>{commenting ? '...' : 'Post'}</button>
+                </form>
+              )}
+            </div>
+          </div>
         )}
 
         {onRemove && (

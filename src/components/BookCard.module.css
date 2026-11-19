@@ -97,11 +97,13 @@
   overflow: hidden;
   margin-top: 2px;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
 }
 
 .expanded .description {
   display: block;
+  line-clamp: unset;
   -webkit-line-clamp: unset;
 }
 
@@ -110,6 +112,147 @@
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.social {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.socialRow,
+.voteGroup {
+  display: flex;
+  align-items: center;
+}
+
+.socialRow {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.voteGroup {
+  gap: 4px;
+}
+
+.voteButton,
+.readButton,
+.commentForm button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.voteButton {
+  min-width: 43px;
+  padding: 5px 8px;
+}
+
+.voteButton:hover,
+.activeVote {
+  border-color: #9e5b72;
+  color: #9e5b72;
+  background: #f8e8ed;
+}
+
+.activeDownvote {
+  border-color: #596f80;
+  color: #596f80;
+  background: #e9f0f4;
+}
+
+.readButton {
+  padding: 5px 9px;
+}
+
+.readButton:hover,
+.read {
+  border-color: #b64a55;
+  color: #b64a55;
+  background: #fff0f0;
+}
+
+.flag {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.readers {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.comments {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.deleteComment {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.deleteComment:hover {
+  color: var(--burgundy);
+}
+
+.comment strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.commentForm {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.commentForm input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+}
+
+.commentForm button {
+  padding: 5px 9px;
+  color: var(--ink);
+}
+
+.commentForm button:disabled {
+  cursor: default;
+  opacity: .45;
 }
 
 .remove {
