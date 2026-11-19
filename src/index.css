@@ -10,16 +10,84 @@
   -webkit-font-smoothing: antialiased;
 
   --cream: #f6f6f4;
-  --paper: #ffffff;
+  --paper: #fffaf6;
   --ink: #17181b;
   --muted: #747579;
-  --burgundy: #a9615d;
-  --rose: #eeeeec;
-  --border: #dededc;
+  --editorial-cream: #f6f6f4;
+  --editorial-paper: #fffaf6;
+  --editorial-border: #eadfd8;
+  --editorial-burgundy: #8d2527;
+  --editorial-rose: #d6aaa7;
+  --burgundy: #8d2527;
+  --rose: #f3dcd8;
+  --border: #eadfd8;
+  --butter: #f3dcd8;
   --black: #17181b;
 
   --serif: 'Playfair Display', Georgia, serif;
   --sans: 'DM Sans', sans-serif;
+}
+
+/* Shared editorial page system. Keep subpage hero styling here so one change updates every page. */
+.editorial-page.editorial-page {
+  width: 100vw;
+  margin-left: calc((100% - 100vw) / 2);
+  min-height: 100vh;
+  padding: 0 0 80px;
+  background: var(--editorial-cream);
+  color: var(--ink);
+}
+
+.editorial-hero.editorial-hero {
+  position: relative;
+  min-height: 305px;
+  padding: 105px max(6vw, calc((100vw - 1080px) / 2)) 85px;
+  color: #fff;
+  background: linear-gradient(90deg, rgb(23 18 14 / .88), rgb(23 18 14 / .35) 60%, rgb(23 18 14 / .14)), url('./assets/nyc-hero.png') center 43% / cover;
+}
+
+.editorial-hero::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 92px;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--editorial-cream));
+}
+
+.editorial-hero.editorial-hero .editorial-hero-inner,
+.editorial-hero.editorial-hero > div {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.editorial-hero.editorial-hero .editorial-kicker {
+  margin: 0 0 14px;
+  color: rgb(255 255 255 / .8);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+}
+
+.editorial-hero.editorial-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--serif);
+  font-size: clamp(3.2rem, 6vw, 4.5rem);
+  font-weight: 400;
+  letter-spacing: -.06em;
+  line-height: .98;
+}
+
+.editorial-hero.editorial-hero h1 em { color: var(--editorial-rose); font-style: italic; }
+.editorial-hero.editorial-hero .editorial-subtitle { margin: 13px 0 0; color: rgb(255 255 255 / .9); font-family: var(--serif); font-size: 17px; }
+
+@media (max-width: 600px) {
+  .editorial-hero { min-height: 300px; padding: 110px 22px 85px; }
 }
 
 * {

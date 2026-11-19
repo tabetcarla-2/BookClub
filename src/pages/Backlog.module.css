@@ -242,11 +242,11 @@
 .libraryShell { width: min(1080px, calc(100% - 48px)); margin: -47px auto 0; padding: 24px 28px 34px; position: relative; z-index: 2; border-radius: 17px; background: rgb(255 250 246 / .95); box-shadow: 0 20px 50px rgb(38 26 20 / .13); }
 .libraryShell .searchArea { margin: 0; }
 .libraryShell .form { margin: 0; }
-.libraryShell .form input { background: #fffaf7; border-radius: 999px; }
+.libraryShell .form input { background: var(--paper); border-radius: 999px; }
 .libraryShell .listHeader { margin-top: 23px; padding-top: 18px; border-top: 1px solid #eadfd8; }
 .libraryShell .grid { grid-template-columns: repeat(3, 1fr); gap: 15px; }
 .backlogToolbar { display: flex; align-items: center; gap: 12px; }
-.backlogSearch { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; padding: 11px 16px; border: 1px solid #e1d5ce; border-radius: 999px; background: #fffaf7; color: var(--muted); }
+.backlogSearch { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; padding: 11px 16px; border: 1px solid #e1d5ce; border-radius: 999px; background: var(--paper); color: var(--muted); }
 .backlogSearch span { font-size: 22px; line-height: 1; }
 .backlogSearch input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12px; }
 .backlogToolbar .primary-button { flex: 0 0 auto; border-radius: 999px; background: #8d2527; border-color: #8d2527; }
@@ -263,7 +263,7 @@
 .archiveHeading > span { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; }
 .archiveMessage { margin: 0; padding: 18px; border: 1px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .archiveGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.archiveCard { display: grid; grid-template-columns: 66px 1fr; gap: 15px; padding: 15px; border: 1px solid #eadfd8; border-radius: 13px; background: #fffaf7; }
+.archiveCard { display: grid; grid-template-columns: 66px 1fr; gap: 15px; padding: 15px; border: 1px solid #eadfd8; border-radius: 13px; background: var(--paper); }
 .archiveCard > img, .archiveCover { width: 66px; height: 93px; object-fit: cover; border-radius: 6px; }
 .archiveCover { display: grid; place-items: center; background: var(--rose); color: var(--burgundy); font-family: var(--serif); font-size: 27px; }
 .archiveCard h3 { margin: 1px 0 3px; font-family: var(--serif); font-size: 19px; }
@@ -275,7 +275,7 @@
 .archiveCard blockquote { margin: 8px 0 0; padding-left: 8px; border-left: 2px solid #e6c2c4; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .archiveComment { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .modalBackdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(24 17 14 / .52); backdrop-filter: blur(5px); }
-.bookModal { position: relative; width: min(620px, 100%); display: grid; grid-template-columns: 150px 1fr; gap: 26px; padding: 28px; border-radius: 18px; background: #fffaf7; box-shadow: 0 24px 70px rgb(0 0 0 / .25); }
+.bookModal { position: relative; width: min(620px, 100%); display: grid; grid-template-columns: 150px 1fr; gap: 26px; padding: 28px; border-radius: 18px; background: var(--paper); box-shadow: 0 24px 70px rgb(0 0 0 / .25); }
 .bookModal > img, .modalCover { width: 150px; height: 215px; object-fit: cover; border-radius: 7px; }
 .modalCover { display: grid; place-items: center; background: var(--rose); color: var(--burgundy); font-family: var(--serif); font-size: 40px; }
 .modalClose { position: absolute; top: 12px; right: 16px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }

@@ -15,7 +15,7 @@
   backdrop-filter: saturate(180%) blur(18px);
 }
 
-.homeHeader {
+.heroHeader {
   position: absolute;
   width: 100%;
   border-bottom-color: transparent;
@@ -23,20 +23,20 @@
   color: #fff;
 }
 
-.homeHeader .brand,
-.homeHeader .navLink,
-.homeHeader .accountText,
-.homeHeader .signOut {
+.heroHeader .brand,
+.heroHeader .navLink,
+.heroHeader .accountText,
+.heroHeader .signOut {
   color: #fff;
 }
 
-.homeHeader .navLink:hover,
-.homeHeader .navLink.active {
+.heroHeader .navLink:hover,
+.heroHeader .navLink.active {
   background: rgb(255 255 255 / 0.14);
   color: #fff;
 }
 
-.homeHeader .avatar {
+.heroHeader .avatar {
   border-color: rgb(255 255 255 / 0.45);
   background: rgb(255 255 255 / 0.16);
   color: #fff;

@@ -310,8 +310,8 @@ function Inspo() {
   })
   const topVotedVenues = [...visibleVenues].sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)).slice(0, 3)
 
-  return <section className={styles.page}>
-    <section className={styles.pageHero}><div><p className={styles.heroKicker}>MEETUPS</p><h1>Our meetup <em>spots.</em></h1><p>Suggest new places, vote on where to meet, and see where we’ve gathered around the city.</p></div></section>
+  return <section className={`${styles.page} editorial-page`}>
+    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEETUPS</p><h1>Our meetup <em>spots.</em></h1><p className="editorial-subtitle">Suggest new places, vote on where to meet, and see where we’ve gathered around the city.</p></div></section>
     <div className={styles.meetupShell}>
       <div className={styles.meetupTopGrid}>
         <section className={styles.upcomingMeeting}>

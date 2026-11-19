@@ -29,8 +29,10 @@ function Navbar() {
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null
   const initials = displayName.slice(0, 1).toUpperCase()
 
+  const imagePage = ['/', '/current-book', '/backlog', '/members', '/inspo', '/profile'].includes(location.pathname)
+
   return (
-    <header className={`${styles.header} ${location.pathname === '/' ? styles.homeHeader : ''}`}>
+    <header className={`${styles.header} ${imagePage ? styles.heroHeader : ''}`}>
       <NavLink to="/" className={styles.brand}>
         nyc book club
       </NavLink>

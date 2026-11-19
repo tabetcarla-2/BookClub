@@ -11,11 +11,11 @@
 .toolbar { display: flex; align-items: center; gap: 18px; margin: 0 0 20px; }
 .viewLabel { padding: 10px 18px; border-radius: 999px; background: #f3dcd8; color: #752a2c; font-family: Georgia, 'Times New Roman', serif; font-weight: 700; }
 .viewLabel span { margin-left: 5px; color: #9e5d5d; font-family: 'DM Mono', monospace; font-size: 11px; }
-.search { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px; padding: 10px 15px; border: 1px solid #bfaea455; border-radius: 999px; background: #fff8f3aa; color: #493b35; }
+.search { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px; padding: 10px 15px; border: 1px solid #bfaea455; border-radius: 999px; background: var(--paper); color: #493b35; }
 .search span { font-size: 24px; line-height: .6; }
 .search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12px; }
 .memberGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.memberCard, .sideCard { border: 1px solid #bfaea455; border-radius: 16px; background: #fffaf6aa; box-shadow: 0 8px 20px #49362a0a; }
+.memberCard, .sideCard { border: 1px solid #bfaea455; border-radius: 16px; background: var(--paper); box-shadow: 0 8px 20px #49362a0a; }
 .memberCard { min-width: 0; padding: 18px 16px 14px; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
 .memberCard:hover, .memberCard:focus-visible { border-color: #a56c6c88; box-shadow: 0 12px 25px #49362a18; outline: 0; transform: translateY(-2px); }
 .memberIdentity { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -57,14 +57,14 @@
 .empty { padding: 35px 20px; border: 1px dashed #bfaea477; border-radius: 16px; color: var(--muted); text-align: center; font-size: 12px; }
 .skeleton { min-height: 156px; border-radius: 16px; background: linear-gradient(90deg, #f2e7df 25%, #fff8f3 50%, #f2e7df 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
 .profileBackdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 22px; background: #24181266; backdrop-filter: blur(4px); }
-.profileModal { position: relative; width: min(100%, 420px); max-height: min(760px, calc(100vh - 44px)); overflow: auto; padding: 30px 22px 24px; border: 1px solid #bfaea477; border-radius: 22px; background: #fffaf6; box-shadow: 0 24px 70px #24181233; }
+.profileModal { position: relative; width: min(100%, 420px); max-height: min(760px, calc(100vh - 44px)); overflow: auto; padding: 30px 22px 24px; border: 1px solid #bfaea477; border-radius: 22px; background: var(--paper); box-shadow: 0 24px 70px #24181233; }
 .closeProfile { position: absolute; top: 14px; right: 16px; border: 0; background: transparent; color: #342722; cursor: pointer; font-size: 27px; line-height: 1; }
 .profileHeader { display: flex; align-items: center; gap: 14px; padding: 10px 4px 20px; }
 .profileAvatar { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: #dfc6bc; color: #71353a; font-family: Georgia, serif; font-size: 28px; object-fit: cover; }
 .profileHeader h2 { margin: 0 0 4px; font-family: Georgia, serif; font-size: 24px; }
 .profileHeader p { margin: 0; color: var(--muted); font-size: 12px; }
 .profileModal h3 { margin: 23px 0 10px; font-family: Georgia, serif; font-size: 19px; }
-.snapshot { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #bfaea455; border-radius: 14px; background: #fffaf6; }
+.snapshot { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #bfaea455; border-radius: 14px; background: var(--paper); }
 .snapshot div { display: grid; justify-items: center; gap: 3px; padding: 13px 7px; border-right: 1px solid #bfaea444; text-align: center; }
 .snapshot div:last-child { border-right: 0; }
 .snapshot strong { font-family: Georgia, serif; font-size: 22px; }

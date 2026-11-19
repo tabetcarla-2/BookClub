@@ -244,12 +244,12 @@ function CurrentBook() {
   }
 
   return (
-    <section className={styles.page}>
-      <section className={styles.pageHero}>
-        <div className={styles.pageHeroInner}>
-          <p className={styles.heroKicker}>NOVEMBER 2026 · CURRENT BOOK</p>
+    <section className={`${styles.page} editorial-page`}>
+      <section className={`${styles.pageHero} editorial-hero`}>
+        <div className={`${styles.pageHeroInner} editorial-hero-inner`}>
+          <p className={`${styles.heroKicker} editorial-kicker`}>NOVEMBER 2026 · CURRENT BOOK</p>
           <h1>Currently <em>reading.</em></h1>
-          <p className={styles.heroSubtitle}>A good book, great company.</p>
+          <p className={`${styles.heroSubtitle} editorial-subtitle`}>A good book, great company.</p>
         </div>
       </section>
       <div className={styles.contentShell}>

@@ -114,8 +114,8 @@ function Members() {
   const currentCounts = useMemo(() => members.reduce((counts, member) => { counts[member.statusKey] += 1; return counts }, { completed: 0, reading: 0, notStarted: 0, skipping: 0 }), [members])
   const currentAverage = members.length ? Math.round(members.reduce((sum, member) => sum + (member.statusKey === 'skipping' ? 0 : member.progress), 0) / members.length) : 0
 
-  return <section className={styles.page}>
-    <section className={styles.pageHero}><div><p className={styles.heroKicker}>MEMBERS</p><h1>Meet the <em>members.</em></h1><p>See everyone’s current reading status, club history, and the people leading the way through our reads.</p></div></section>
+  return <section className={`${styles.page} editorial-page`}>
+    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEMBERS</p><h1>Meet the <em>members.</em></h1><p className="editorial-subtitle">See everyone’s current reading status, club history, and the people leading the way through our reads.</p></div></section>
     <div className={styles.membersShell}>
       <main className={styles.membersMain}>
         <div className={styles.toolbar}><div className={styles.viewLabel}>Current read <span>{members.length}</span></div><label className={styles.search}><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search members..." /></label></div>
