@@ -3,21 +3,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import type { Book } from '../types'
 import coverImage from '../assets/husbands-secret-cover.png'
-import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
 import { BookOpenIcon } from '../components/Icons'
 import styles from './CurrentBook.module.css'
 
 type ReadingStatus = 'reading' | 'skipping' | 'completed'
 type MemberProgress = { id: string; name: string; avatarUrl: string | null; progress: number; status: string }
-type PreviousRead = {
-  id: string
-  title: string
-  author: string
-  coverUrl?: string | null
-  readers: string[]
-  reviews: { id: string; author: string; rating: number; comment?: string | null }[]
-  comments: { id: string; author: string; content: string }[]
-}
 type CurrentReview = { id: string; userId: string; author: string; rating: number; comment?: string | null }
 type DiscussionComment = { id: string; userId: string; author: string; content: string; revealAt: number; createdAt: string }
 
@@ -32,16 +22,6 @@ function RatingStars({ value, onChange, interactive = false }: { value: number; 
       </span>
     })}
   </span>
-}
-
-const parablePlaceholderRead: PreviousRead = {
-  id: 'parable-of-the-sower-placeholder',
-  title: 'Parable of the Sower',
-  author: 'Octavia E. Butler',
-  coverUrl: parablePlaceholder,
-  readers: [],
-  reviews: [],
-  comments: [],
 }
 
 const demoBook: Book = {
@@ -73,7 +53,6 @@ function CurrentBook() {
   const [commentSaving, setCommentSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'discussion' | 'reviews'>('discussion')
   const [memberProgress, setMemberProgress] = useState<MemberProgress[]>([])
-  const [previousReads, setPreviousReads] = useState<PreviousRead[]>([parablePlaceholderRead])
   const [loadError, setLoadError] = useState('')
   const progressEditorRef = useRef<HTMLElement>(null)
 
@@ -138,57 +117,6 @@ function CurrentBook() {
       // separately so they do not delay the main page.
       setCurrentLoading(false)
 
-      const [{ data: completedBooks }, { data: historicalClubBooks }, { data: clubReads }] = await Promise.all([
-        supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed').neq('book_id', current.book_id),
-        supabase.from('club_books').select('book_id').eq('club_id', current.club_id).eq('is_current', false),
-        supabase.from('book_reads').select('book_id, user_id').neq('book_id', current.book_id),
-      ])
-      const previousBookIds = Array.from(new Set([
-        ...(completedBooks ?? []).map((item) => item.book_id),
-        ...(historicalClubBooks ?? []).map((item) => item.book_id),
-        ...(clubReads ?? []).map((item) => item.book_id),
-      ]))
-      if (previousBookIds.length === 0) {
-        setPreviousReads([parablePlaceholderRead])
-        setCurrentLoading(false)
-        return
-      }
-
-      const [{ data: historyBooks }, { data: historyReviews }, { data: historyComments }, { data: historyReads }] = await Promise.all([
-        supabase.from('books').select('id, title, author, cover_url').in('id', previousBookIds),
-        supabase.from('reviews').select('id, book_id, user_id, rating, comment').in('book_id', previousBookIds).order('created_at', { ascending: true }),
-        supabase.from('book_comments').select('id, book_id, user_id, content').in('book_id', previousBookIds).order('created_at', { ascending: true }),
-        supabase.from('book_reads').select('book_id, user_id').in('book_id', previousBookIds),
-      ])
-      const completedReaders = new Map<string, string[]>()
-      for (const item of completedBooks ?? []) {
-        const readers = completedReaders.get(item.book_id) ?? []
-        const name = names.get(item.user_id) ?? 'a member'
-        if (!readers.includes(name)) readers.push(name)
-        completedReaders.set(item.book_id, readers)
-      }
-      for (const item of historyReads ?? []) {
-        const readers = completedReaders.get(item.book_id) ?? []
-        const name = names.get(item.user_id) ?? 'a member'
-        if (!readers.includes(name)) readers.push(name)
-        completedReaders.set(item.book_id, readers)
-      }
-      const historyBookMap = new Map((historyBooks ?? []).map((book) => [book.id, book]))
-      const loadedPreviousReads = previousBookIds.flatMap((bookId) => {
-        const historyBook = historyBookMap.get(bookId)
-        if (!historyBook) return []
-        return [{
-          id: historyBook.id,
-          title: historyBook.title,
-          author: historyBook.author,
-          coverUrl: historyBook.cover_url || (historyBook.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null),
-          readers: completedReaders.get(bookId) ?? [],
-          reviews: (historyReviews ?? []).filter((item) => item.book_id === bookId).map((item) => ({ id: item.id, author: names.get(item.user_id) ?? 'a member', rating: item.rating, comment: item.comment })),
-          comments: (historyComments ?? []).filter((item) => item.book_id === bookId).map((item) => ({ id: item.id, author: names.get(item.user_id) ?? 'a member', content: item.content })),
-        }]
-      })
-      setPreviousReads(loadedPreviousReads.some((book) => book.title.toLowerCase() === parablePlaceholderRead.title.toLowerCase()) ? loadedPreviousReads : [parablePlaceholderRead, ...loadedPreviousReads])
-      setCurrentLoading(false)
     }
     loadCurrentBook()
   }, [user])
@@ -361,21 +289,6 @@ function CurrentBook() {
 
       {celebrationOpen && <div className={styles.celebrationBackdrop} role="dialog" aria-modal="true" aria-labelledby="celebration-title"><div className={styles.celebration}><span className={styles.confetti} aria-hidden="true">✦</span><p className="eyebrow">ONE MORE BOOK FOR THE CLUB</p><h2 id="celebration-title">You finished it.</h2><p>Nice work. Your thoughts are officially wanted.</p><div className={styles.celebrationActions}><button type="button" className="primary-button" onClick={() => { setCelebrationOpen(false); setActiveTab('reviews'); setReviewOpen(true) }}>Give your review</button><button type="button" className={styles.dismissButton} onClick={() => setCelebrationOpen(false)}>Maybe later</button></div></div></div>}
 
-      <section className={styles.previousReadsSection}>
-        <p className="eyebrow">THE CLUB ARCHIVE</p>
-        <h2>Previous reads.</h2>
-        {previousReads.length > 0 ? <div className={styles.previousReadsList}>{previousReads.map((previous) => <article className={styles.previousRead} key={previous.id}>
-          {previous.coverUrl ? <img src={previous.coverUrl} alt="" /> : <div className={styles.previousCover}>{previous.title.slice(0, 1)}</div>}
-          <div className={styles.previousInfo}>
-            <h3>{previous.title}</h3>
-            <p className={styles.muted}>{previous.author}</p>
-            <p className={styles.readBy}><strong>Read by</strong> {previous.readers.join(', ') || 'no one yet'}</p>
-            {previous.reviews.map((review) => <blockquote key={review.id}><strong>{review.author}</strong> · {review.rating.toFixed(2).replace(/\.00$/, '')}/5{review.comment ? ` — “${review.comment}”` : ''}</blockquote>)}
-            {previous.comments.map((comment) => <p className={styles.archiveComment} key={comment.id}><strong>{comment.author}</strong> {comment.content}</p>)}
-            {previous.reviews.length === 0 && previous.comments.length === 0 && <p className={styles.muted}>No reviews or comments yet.</p>}
-          </div>
-        </article>)}</div> : <p className={styles.archiveEmpty}>Books the club finishes together will appear here with their readers, reviews, and comments.</p>}
-      </section>
       </div>
     </section>
   )

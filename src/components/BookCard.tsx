@@ -9,6 +9,7 @@ interface BookCardProps {
   cover?: string | null
   description?: string | null
   addedBy?: string
+  onOpen?: () => void
   onRemove?: () => void
   interaction?: BookInteraction
   onVote?: (vote: 1 | -1) => void | Promise<void>
@@ -41,6 +42,7 @@ function BookCard({
   cover,
   description,
   addedBy,
+  onOpen,
   onRemove,
   interaction,
   onVote,
@@ -73,11 +75,12 @@ function BookCard({
       className={`${styles.card} ${expanded ? styles.expanded : ''}`}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest('button, input, textarea, select')) return
-        toggleExpanded()
+        if (onOpen) onOpen()
+        else toggleExpanded()
       }}
       onKeyDown={handleCardKeyDown}
-      aria-expanded={displayDescription ? expanded : undefined}
-      aria-label={displayDescription ? `${title}. Click to ${expanded ? 'collapse' : 'expand'} description.` : undefined}
+      aria-expanded={onOpen ? undefined : displayDescription ? expanded : undefined}
+      aria-label={onOpen ? `${title}. Open book details.` : displayDescription ? `${title}. Click to ${expanded ? 'collapse' : 'expand'} description.` : undefined}
       role={displayDescription ? 'button' : undefined}
       tabIndex={displayDescription ? 0 : undefined}
     >
@@ -101,7 +104,7 @@ function BookCard({
 
         {addedBy && <small className={styles.addedBy}>Added by {addedBy}</small>}
 
-        {displayDescription && (
+        {displayDescription && !onOpen && (
           <small className={styles.description}>
             {displayDescription}
             {!expanded && <span className={styles.readMore}> Read more</span>}

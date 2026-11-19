@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useBooks } from '../hooks/useBooks'
 import type { Book } from '../types'
+import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
 import styles from './Backlog.module.css'
 
 type OpenLibraryDoc = {
@@ -30,6 +31,7 @@ type BacklogBook = Book & { addedBy?: string }
 type VoteRow = { book_id: string; user_id: string; vote: 1 | -1 }
 type ReadRow = { book_id: string; user_id: string }
 type CommentRow = { id: string; book_id: string; user_id: string; content: string; created_at: string }
+type ArchiveBook = { id: string; title: string; author: string; coverUrl: string | null; readers: string[]; reviews: { id: string; author: string; rating: number; comment: string | null }[]; comments: { id: string; author: string; content: string }[] }
 
 function coverUrl(coverId?: number) {
   return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null
@@ -130,6 +132,10 @@ function Backlog() {
   const { user } = useAuth()
   const { books: catalog, addBook } = useBooks()
   const [bookTitle, setBookTitle] = useState('')
+  const [backlogQuery, setBacklogQuery] = useState('')
+  const [showSuggestSearch, setShowSuggestSearch] = useState(false)
+  const [selectedView, setSelectedView] = useState<'all' | 'top' | 'to-read'>('all')
+  const [selectedBook, setSelectedBook] = useState<BacklogBook | null>(null)
   const [books, setBooks] = useState<BacklogBook[]>([])
   const [suggestions, setSuggestions] = useState<OpenLibraryDoc[]>([])
   const [searching, setSearching] = useState(false)
@@ -139,13 +145,24 @@ function Backlog() {
   const [selectedOrder, setSelectedOrder] = useState('default')
   const [interactions, setInteractions] = useState<Record<string, BookInteraction>>({})
   const [backlogLoading, setBacklogLoading] = useState(true)
+  const [archiveBooks, setArchiveBooks] = useState<ArchiveBook[]>([])
+  const [archiveLoading, setArchiveLoading] = useState(true)
 
   const genreOptions = Array.from(
     new Set(books.map((book) => book.genre?.trim()).filter((genre): genre is string => Boolean(genre))),
   ).sort((a, b) => a.localeCompare(b))
+  const searchedBooks = books.filter((book) => {
+    const query = backlogQuery.trim().toLowerCase()
+    return !query || `${book.title} ${book.author} ${book.genre ?? ''}`.toLowerCase().includes(query)
+  })
+  const viewedBooks = selectedView === 'top'
+    ? searchedBooks.filter((book) => (interactions[book.id]?.upvotes ?? 0) > 0)
+    : selectedView === 'to-read'
+      ? searchedBooks.filter((book) => !interactions[book.id]?.readByMe)
+      : searchedBooks
   const filteredBooks = selectedGenre === 'all'
-    ? books
-    : books.filter((book) => book.genre?.trim() === selectedGenre)
+    ? viewedBooks
+    : viewedBooks.filter((book) => book.genre?.trim() === selectedGenre)
   const orderedBooks = [...filteredBooks].sort((a, b) => {
     const first = interactions[a.id]
     const second = interactions[b.id]
@@ -236,6 +253,52 @@ function Backlog() {
   }, [user])
 
   useEffect(() => {
+    let cancelled = false
+    async function loadArchive() {
+      if (!supabase || !user) { setArchiveLoading(false); return }
+      const [{ data: completed }, { data: clubBooks }, { data: reads }, { data: profiles }] = await Promise.all([
+        supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed'),
+        supabase.from('club_books').select('book_id, is_current'),
+        supabase.from('book_reads').select('book_id, user_id'),
+        supabase.from('profiles').select('id, full_name, username'),
+      ])
+      const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name || profile.username || 'a member']))
+      const currentBookIds = new Set((clubBooks ?? []).filter((item) => item.is_current).map((item) => item.book_id))
+      const archiveIds = new Set([
+        ...(completed ?? []).map((item) => item.book_id),
+        ...(clubBooks ?? []).filter((item) => !item.is_current).map((item) => item.book_id),
+        ...(reads ?? []).map((item) => item.book_id),
+      ].filter((bookId) => !currentBookIds.has(bookId)))
+      if (archiveIds.size === 0) { if (!cancelled) { setArchiveBooks([]); setArchiveLoading(false) }; return }
+      const ids = Array.from(archiveIds)
+      const [{ data: books }, { data: reviews }, { data: comments }] = await Promise.all([
+        supabase.from('books').select('id, title, author, cover_url').in('id', ids),
+        supabase.from('reviews').select('id, book_id, user_id, rating, comment').in('book_id', ids).order('created_at', { ascending: true }),
+        supabase.from('book_comments').select('id, book_id, user_id, content').in('book_id', ids).order('created_at', { ascending: true }),
+      ])
+      const readers = new Map<string, string[]>()
+      for (const item of [...(completed ?? []), ...(reads ?? [])]) {
+        const list = readers.get(item.book_id) ?? []
+        const name = names.get(item.user_id) ?? 'a member'
+        if (!list.includes(name)) list.push(name)
+        readers.set(item.book_id, list)
+      }
+      const loaded = (books ?? []).map((book) => ({
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null),
+        readers: readers.get(book.id) ?? [],
+        reviews: (reviews ?? []).filter((review) => review.book_id === book.id).map((review) => ({ id: review.id, author: names.get(review.user_id) ?? 'a member', rating: review.rating, comment: review.comment })),
+        comments: (comments ?? []).filter((comment) => comment.book_id === book.id).map((comment) => ({ id: comment.id, author: names.get(comment.user_id) ?? 'a member', content: comment.content })),
+      }))
+      if (!cancelled) { setArchiveBooks(loaded); setArchiveLoading(false) }
+    }
+    loadArchive()
+    return () => { cancelled = true }
+  }, [user])
+
+  useEffect(() => {
     if (!user || books.length === 0) return
     try { localStorage.setItem(`bookclub-backlog-${user.id}`, JSON.stringify({ books, interactions })) } catch { /* Cache is optional. */ }
   }, [books, interactions, user])
@@ -268,7 +331,7 @@ function Backlog() {
 
     if (!supabase || !user) {
       setBooks((previous) => [...previous, { id: `demo-${Date.now()}`, ...metadata }])
-      setBookTitle(''); setSuggestions([]); setSaving(false); return
+      setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false); return
     }
 
     // Older accounts may not have a profile row yet, but backlog_items has a
@@ -299,7 +362,7 @@ function Backlog() {
       const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'you'
       setBooks((previous) => [...previous.filter((book) => book.id !== addedBook.id), { ...addedBook, addedBy: displayName }])
     }
-    setBookTitle(''); setSuggestions([]); setSaving(false)
+    setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false)
   }
 
   async function removeBook(book: BacklogBook) {
@@ -378,13 +441,13 @@ function Backlog() {
 
   return (
     <section className={styles.page}>
-      <p className="eyebrow">BACKLOG</p>
-      <h1>Books to <em>discover.</em></h1>
-      <p className={styles.description}>Search the library, find the one, and add it to the club backlog.</p>
-      <div className={styles.searchArea}>
-        <div className={styles.form}><input type="search" placeholder="Search by title, author, or ISBN..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} /><button className="primary-button" onClick={() => addBookToBacklog()} disabled={saving}>{saving ? 'Adding...' : '+ Add book'}</button></div>
+      <section className={styles.pageHero}><div><p className={styles.heroKicker}>THE CLUB LIBRARY</p><h1>The <em>backlog.</em></h1><p>Suggest, vote, and choose our next read.</p></div></section>
+      <div className={styles.libraryShell}>
+      <div className={styles.backlogToolbar}><label className={styles.backlogSearch}><span aria-hidden="true">⌕</span><input type="search" placeholder="Search the backlog..." value={backlogQuery} onChange={(event) => setBacklogQuery(event.target.value)} /></label><button type="button" className="primary-button" onClick={() => setShowSuggestSearch((open) => !open)}>{showSuggestSearch ? 'Close search' : 'Suggest a book'}</button></div>
+      {showSuggestSearch && <div className={styles.searchArea}>
+        <div className={styles.form}><input type="search" placeholder="Search books by title, author, or ISBN..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} autoFocus /><button className="primary-button" onClick={() => addBookToBacklog()} disabled={saving}>{saving ? 'Adding...' : 'Add book'}</button></div>
         {(searching || suggestions.length > 0) && <div className={styles.suggestions} aria-live="polite">{searching && <p className={styles.searchMessage}>Searching Open Library...</p>}{suggestions.map((suggestion) => { const metadata = toBook(suggestion); return <button type="button" className={styles.suggestion} key={suggestion.key} onClick={() => addBookToBacklog(suggestion)}><span className={styles.suggestionCover}>{metadata.cover_url ? <img src={metadata.cover_url} alt="" /> : '—'}</span><span><strong>{metadata.title}</strong><small>{metadata.author} · {metadata.genre}</small></span><span className={styles.addIcon}>+</span></button> })}</div>}
-      </div>
+      </div>}
       {error && <p className={styles.error}>{error}</p>}
       {backlogLoading ? (
         <div className={styles.loading} role="status" aria-live="polite">
@@ -394,6 +457,7 @@ function Backlog() {
       ) : <>
       <div className={styles.listHeader}>
         <p className="eyebrow">{filteredBooks.length} OF {books.length} BOOKS ON YOUR LIST</p>
+        <div className={styles.viewTabs}><button type="button" className={selectedView === 'all' ? styles.activeView : ''} onClick={() => setSelectedView('all')}>All books</button><button type="button" className={selectedView === 'top' ? styles.activeView : ''} onClick={() => setSelectedView('top')}>Top picks</button><button type="button" className={selectedView === 'to-read' ? styles.activeView : ''} onClick={() => setSelectedView('to-read')}>To read</button></div>
         <div className={styles.filters}>
           {genreOptions.length > 0 && (
             <label className={styles.filter}>
@@ -418,11 +482,17 @@ function Backlog() {
       {books.length === 0 ? (
         <p className={styles.empty}>Your reading list is empty. Search above to find your next read.</p>
       ) : filteredBooks.length > 0 ? (
-        <div className={styles.grid}>{orderedBooks.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} interaction={user ? interactions[book.id] : undefined} onVote={(vote) => voteOnBook(book.id, vote)} onToggleRead={() => toggleRead(book.id)} onAddComment={(content) => addComment(book.id, content)} onDeleteComment={(commentId) => deleteComment(book.id, commentId)} />)}</div>
+        <div className={styles.grid}>{orderedBooks.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onOpen={() => setSelectedBook(book)} onRemove={() => removeBook(book)} interaction={user ? interactions[book.id] : undefined} onVote={(vote) => voteOnBook(book.id, vote)} onToggleRead={() => toggleRead(book.id)} onAddComment={(content) => addComment(book.id, content)} onDeleteComment={(commentId) => deleteComment(book.id, commentId)} />)}</div>
       ) : (
         <p className={styles.empty}>No books in this genre yet. Try another filter.</p>
       )}
+      <section className={styles.archiveSection}>
+        <div className={styles.archiveHeading}><div><h2>Previously discussed.</h2></div><span>{archiveBooks.length} books</span></div>
+        {archiveLoading ? <p className={styles.archiveMessage}>Loading the club archive…</p> : archiveBooks.length === 0 ? <p className={styles.archiveMessage}>Books the club finishes together will appear here with their readers, reviews, and comments.</p> : <div className={styles.archiveGrid}>{archiveBooks.map((book) => <article className={styles.archiveCard} key={book.id}>{book.coverUrl ? <img src={book.coverUrl} alt={`Cover of ${book.title}`} /> : <div className={styles.archiveCover}>{book.title.slice(0, 1)}</div>}<div><h3>{book.title}</h3><p>{book.author}</p><div className={styles.archiveStats}><span>★ {book.reviews.length > 0 ? (book.reviews.reduce((total, review) => total + review.rating, 0) / book.reviews.length).toFixed(1) : '—'} group rating</span><span>{book.readers.length} read</span></div><small><strong>Read by</strong> {book.readers.join(', ') || 'no one yet'}</small>{book.reviews.slice(0, 2).map((review) => <blockquote key={review.id}><strong>{review.author}</strong> · {review.rating.toFixed(2).replace(/\.00$/, '')}/5{review.comment ? ` — “${review.comment}”` : ''}</blockquote>)}{book.comments.slice(0, 2).map((comment) => <div className={styles.archiveComment} key={comment.id}><strong>{comment.author}</strong> {comment.content}</div>)}{book.reviews.length === 0 && book.comments.length === 0 && <small>No reviews or comments yet.</small>}</div></article>)}</div>}
+      </section>
       </>}
+      </div>
+      {selectedBook && <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="book-detail-title" onClick={() => setSelectedBook(null)}><article className={styles.bookModal} onClick={(event) => event.stopPropagation()}><button type="button" className={styles.modalClose} onClick={() => setSelectedBook(null)} aria-label="Close book details">×</button>{selectedBook.cover_url ? <img src={selectedBook.cover_url} alt={`Cover of ${selectedBook.title}`} /> : <div className={styles.modalCover}>{selectedBook.title.slice(0, 1)}</div>}<div className={styles.modalContent}><p className="eyebrow">BOOK DETAILS</p><h2 id="book-detail-title">{selectedBook.title}</h2><p className={styles.modalAuthor}>{selectedBook.author}</p>{selectedBook.genre && <span className={styles.modalGenre}>{selectedBook.genre}</span>}<p className={styles.modalDescription}>{selectedBook.description || 'No description is available yet for this title.'}</p>{interactions[selectedBook.id] && <div className={styles.modalStats}><span>↑ {interactions[selectedBook.id].upvotes}</span><span>↓ {interactions[selectedBook.id].downvotes}</span><span>{interactions[selectedBook.id].readers.length} read</span><span>{interactions[selectedBook.id].comments.length} comments</span></div>}<small className={styles.modalAdded}>Added by {selectedBook.addedBy || 'a member'}</small></div></article></div>}
     </section>
   )
 }
