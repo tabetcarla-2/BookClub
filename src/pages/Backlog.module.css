@@ -147,6 +147,29 @@
   font-size: 12px;
 }
 
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 240px;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.loadingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 @media (max-width: 750px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);

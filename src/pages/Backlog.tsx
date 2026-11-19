@@ -31,13 +31,6 @@ type VoteRow = { book_id: string; user_id: string; vote: 1 | -1 }
 type ReadRow = { book_id: string; user_id: string }
 type CommentRow = { id: string; book_id: string; user_id: string; content: string; created_at: string }
 
-const demoBooks: BacklogBook[] = [
-  { id: 'demo-1', title: 'The Secret History', author: 'Donna Tartt' },
-  { id: 'demo-2', title: 'Normal People', author: 'Sally Rooney' },
-  { id: 'demo-3', title: 'Tomorrow, and Tomorrow, and Tomorrow', author: 'Gabrielle Zevin' },
-  { id: 'demo-4', title: 'The Bell Jar', author: 'Sylvia Plath' },
-]
-
 function coverUrl(coverId?: number) {
   return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null
 }
@@ -137,7 +130,7 @@ function Backlog() {
   const { user } = useAuth()
   const { books: catalog, loading: catalogLoading, addBook } = useBooks()
   const [bookTitle, setBookTitle] = useState('')
-  const [books, setBooks] = useState<BacklogBook[]>(demoBooks)
+  const [books, setBooks] = useState<BacklogBook[]>([])
   const [suggestions, setSuggestions] = useState<OpenLibraryDoc[]>([])
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState('')
@@ -145,6 +138,7 @@ function Backlog() {
   const [selectedGenre, setSelectedGenre] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState('default')
   const [interactions, setInteractions] = useState<Record<string, BookInteraction>>({})
+  const [backlogLoading, setBacklogLoading] = useState(true)
 
   const genreOptions = Array.from(
     new Set(books.map((book) => book.genre?.trim()).filter((genre): genre is string => Boolean(genre))),
@@ -165,12 +159,13 @@ function Backlog() {
     let cancelled = false
 
     async function loadBacklog() {
-      if (!supabase || !user || catalogLoading) return
+      if (!supabase || !user) { setBacklogLoading(false); return }
+      if (catalogLoading) return
       const [{ data, error: fetchError }, { data: profiles }] = await Promise.all([
         supabase.from('backlog_items').select('book_id, user_id').or(`user_id.eq.${user.id},visibility.eq.club`),
         supabase.from('profiles').select('id, full_name, username'),
       ])
-      if (fetchError) { setError(fetchError.message); return }
+      if (fetchError) { setError(fetchError.message); setBacklogLoading(false); return }
       const ids = new Set((data ?? []).map((item) => item.book_id))
       const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name || `@${profile.username}`]))
       const contributors = new Map<string, string[]>()
@@ -210,6 +205,7 @@ function Backlog() {
       if (cancelled) return
       setBooks(enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })))
       setInteractions(interactionMap)
+      setBacklogLoading(false)
     }
     loadBacklog()
 
@@ -362,6 +358,12 @@ function Backlog() {
         {(searching || suggestions.length > 0) && <div className={styles.suggestions} aria-live="polite">{searching && <p className={styles.searchMessage}>Searching Open Library...</p>}{suggestions.map((suggestion) => { const metadata = toBook(suggestion); return <button type="button" className={styles.suggestion} key={suggestion.key} onClick={() => addBookToBacklog(suggestion)}><span className={styles.suggestionCover}>{metadata.cover_url ? <img src={metadata.cover_url} alt="" /> : '—'}</span><span><strong>{metadata.title}</strong><small>{metadata.author} · {metadata.genre}</small></span><span className={styles.addIcon}>+</span></button> })}</div>}
       </div>
       {error && <p className={styles.error}>{error}</p>}
+      {backlogLoading ? (
+        <div className={styles.loading} role="status" aria-live="polite">
+          <span className={styles.loadingDot} />
+          <p>Loading the club list...</p>
+        </div>
+      ) : <>
       <div className={styles.listHeader}>
         <p className="eyebrow">{filteredBooks.length} OF {books.length} BOOKS ON YOUR LIST</p>
         <div className={styles.filters}>
@@ -392,6 +394,7 @@ function Backlog() {
       ) : (
         <p className={styles.empty}>No books in this genre yet. Try another filter.</p>
       )}
+      </>}
     </section>
   )
 }
