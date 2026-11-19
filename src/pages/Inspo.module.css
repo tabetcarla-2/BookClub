@@ -2,6 +2,17 @@
 .page h1 { font-family: var(--serif); font-size: 60px; letter-spacing: -1.5px; font-weight: 400; }
 .page h1 em { color: var(--burgundy); }
 .description { max-width: 560px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.upcomingMeeting { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 18px; margin-top: 38px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--paper); box-shadow: 0 8px 24px #17181b0a; }
+.upcomingDetails h2 { margin: 0 0 9px; font-family: var(--serif); font-size: 28px; font-weight: 400; }
+.meetingMeta { margin: 4px 0; color: var(--muted); font-size: 12px; }
+.rsvpButton { margin-top: 19px; border: 1px solid var(--ink); border-radius: 7px; padding: 10px 18px; background: var(--ink); color: var(--paper); font-size: 11px; cursor: pointer; }
+.rsvpButton:hover, .rsvpButton.rsvped { border-color: var(--burgundy); background: var(--burgundy); }
+.calendarCard { display: grid; align-content: center; justify-items: center; gap: 5px; padding: 18px; border-left: 1px solid var(--border); background: var(--cream); color: var(--ink); text-align: center; }
+.calendarCard svg { margin-bottom: 3px; color: var(--burgundy); }
+.calendarCard span { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; }
+.calendarCard strong { font-family: var(--serif); font-size: 62px; font-weight: 400; line-height: .95; }
+.calendarCard small { color: var(--burgundy); font-family: 'DM Mono', monospace; font-size: 9px; }
+.rsvpList { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .venueSection { margin-top: 55px; }
 .sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .sectionHeading h2 { margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 400; }
@@ -9,7 +20,7 @@
 .viewToggle { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--cream); }
 .viewToggle button { border: 0; border-radius: 999px; padding: 8px 13px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
 .viewToggle button:hover, .viewToggle .activeView { background: var(--paper); color: var(--ink); box-shadow: 0 2px 8px #1d1d1f10; }
-.addPanel { position: relative; z-index: 3; margin: 24px 0; padding: 18px; border: 1px solid var(--border); border-radius: 20px; background: var(--paper); box-shadow: 0 10px 28px #1d1d1f0b; }
+.addPanel { position: relative; z-index: 3; margin: 24px 0; padding: 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--paper); box-shadow: 0 10px 28px #26364b0d; }
 .addPanelIntro { display: grid; gap: 4px; margin-bottom: 16px; }
 .addPanelIntro strong { font-size: 13px; }
 .addPanelIntro span { color: var(--muted); font-size: 11px; }
@@ -59,7 +70,8 @@
 .filterRow button:hover, .filterRow .activeFilter { border-color: var(--burgundy); background: #fff1f4; color: var(--burgundy); }
 .venueSection[data-trial-filter="tried"] .venueCard:not(.groupTriedCard), .venueSection[data-trial-filter="untried"] .groupTriedCard { display: none; }
 .venues { display: grid; gap: 12px; }
-.venueCard { padding: 20px; background: var(--paper); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 7px 22px #1d1d1f08; }
+.venueCard { padding: 20px; background: var(--paper); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 7px 22px #26364b0d; }
+.venueCard:nth-child(4n + 2), .venueCard:nth-child(4n + 3), .venueCard:nth-child(4n + 4) { background: var(--paper); }
 .groupTriedCard { border-color: #d8a7b2; background: linear-gradient(135deg, #fff 0%, #fff8fa 100%); }
 .cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
 .cardActions { display: flex; align-items: center; gap: 8px; }
@@ -130,4 +142,4 @@
 .error { color: #a33d43; font-size: 12px; }
 @media (max-width: 800px) { .page h1 { font-size: 48px; } .mapView { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .tagEditor, .inlineTagEditor { grid-template-columns: 1fr; } }
-@media (max-width: 560px) { .sectionHeading { align-items: flex-start; flex-direction: column; } .headingActions { width: 100%; justify-content: space-between; } .venueForm { grid-template-columns: 1fr; } .addressSearch, .selectedAddress { grid-column: auto; } .venueForm > button { grid-column: auto; } .cardTop { flex-direction: column; } .mapCanvas { min-height: 310px; } }
+@media (max-width: 560px) { .upcomingMeeting { grid-template-columns: 1fr; } .calendarCard { border-top: 1px solid var(--border); border-left: 0; } .sectionHeading { align-items: flex-start; flex-direction: column; } .headingActions { width: 100%; justify-content: space-between; } .venueForm { grid-template-columns: 1fr; } .addressSearch, .selectedAddress { grid-column: auto; } .venueForm > button { grid-column: auto; } .cardTop { flex-direction: column; } .mapCanvas { min-height: 310px; } }

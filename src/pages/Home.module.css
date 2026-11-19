@@ -1,163 +1,83 @@
+.home {
+  width: 100vw;
+  margin-left: calc((100% - 100vw) / 2);
+  color: var(--ink);
+}
 
 .hero {
+  min-height: 650px;
+  padding: 150px max(6vw, calc((100vw - 1080px) / 2)) 140px;
+  color: #fff;
   position: relative;
-  overflow: hidden;
-  padding: 88px 8%;
-  margin: 34px 0 65px;
-  background: linear-gradient(135deg, #ffffff 0%, var(--rose) 100%);
-  border-radius: 32px;
-  border: 1px solid var(--border);
-  box-shadow: 0 18px 45px #1d1d1f0d;
+  background: linear-gradient(90deg, rgb(23 18 14 / 0.86), rgb(23 18 14 / 0.4) 56%, rgb(23 18 14 / 0.16)), url('../assets/nyc-hero.png') center / cover;
 }
 
-.hero h1 {
-  font-family: var(--serif);
-  font-size: clamp(45px, 6vw, 76px);
-  letter-spacing: -3px;
-  line-height: 1.1;
-  font-weight: 400;
-  margin: 0 0 20px;
+.hero::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 150px;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--cream));
 }
 
-.hero h1 em {
-  color: var(--burgundy);
-}
+.heroContent { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 50px; }
+.heroCopy { max-width: 610px; }
+.heroKicker, .meetupLabel { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; }
+.heroKicker { margin: 0 0 22px; color: rgb(255 255 255 / 0.78); }
+.hero h1 { margin: 0; color: #fff; font-family: var(--serif); font-size: clamp(3.5rem, 7vw, 5.3rem); font-weight: 400; letter-spacing: -0.055em; line-height: 0.94; }
+.hero h1 em { font-weight: 400; }
+.heroDescription { margin: 27px 0 28px; color: rgb(255 255 255 / 0.88); font-size: 1.16rem; line-height: 1.45; }
+.heroButton { display: inline-flex; align-items: center; gap: 18px; padding: 13px 20px; border-radius: 9px; background: #fffaf4; color: #241c18; font-size: 0.94rem; font-weight: 700; transition: transform 180ms ease, background 180ms ease; }
+.heroButton:hover { background: #fff; color: #241c18; transform: translateY(-2px); }
+.heroButton span, .rsvpLink span, .textLink span { font-size: 1.2em; }
 
-.heroContent {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
-  align-items: center;
-  gap: 48px;
-}
+.meetupCard { width: 300px; flex: 0 0 300px; margin-top: 58px; padding: 28px; border-radius: 20px; background: rgb(255 250 246 / 0.94); color: var(--ink); box-shadow: 0 20px 50px rgb(0 0 0 / 0.18); }
+.meetupLabel { display: flex; align-items: center; gap: 10px; color: #675952; }
+.meetupCard h2 { margin: 16px 0 4px; font-family: var(--serif); font-size: 2rem; font-weight: 500; letter-spacing: -0.04em; }
+.meetupCard > p { margin: 0; color: #756861; font-size: 0.84rem; }
+.rsvpPeople { display: flex; align-items: center; margin: 26px 0 23px; }
+.rsvpPeople img, .rsvpPeople span { width: 30px; height: 30px; margin-left: -8px; border: 2px solid #fffaf6; border-radius: 50%; object-fit: cover; background: #d4c2b8; color: #4d3931; display: grid; place-items: center; font-size: 0.7rem; font-weight: 700; }
+.rsvpPeople img:first-child, .rsvpPeople span:first-child { margin-left: 0; }
+.rsvpPeople small { margin-left: 12px; color: #4d433e; font-size: 0.78rem; }
+.rsvpLink, .textLink { display: inline-flex; align-items: center; gap: 9px; color: var(--burgundy); font-size: 0.83rem; font-weight: 700; }
+.rsvpLink:hover, .textLink:hover { color: var(--ink); }
 
-.description {
-  max-width: 420px;
-  color: #555550;
-  font-size: 13px;
-  line-height: 1.8;
-  margin-bottom: 25px;
-}
+.dashboardPanel { position: relative; z-index: 2; width: min(1040px, calc(100% - 48px)); margin: -92px auto 80px; padding: 30px 42px; display: grid; grid-template-columns: 1.25fr 0.9fr; gap: 36px; border-radius: 22px; background: var(--paper); box-shadow: 0 22px 50px rgb(28 18 13 / 0.16); }
+.currentReading { display: flex; align-items: center; gap: 30px; min-width: 0; }
+.coverLink { flex: 0 0 auto; }
+.coverLink img { width: 142px; height: 202px; display: block; border-radius: 8px; object-fit: cover; box-shadow: 0 12px 20px rgb(35 23 17 / 0.2); }
+.readingInfo { min-width: 0; }
+.readingInfo h2 { margin: 10px 0 2px; color: var(--ink); font-family: var(--serif); font-size: clamp(1.65rem, 3vw, 2.05rem); font-style: italic; font-weight: 500; letter-spacing: -0.04em; line-height: 1.05; }
+.readingInfo h2:hover { color: var(--burgundy); }
+.author { margin: 0; color: var(--muted); font-size: 0.86rem; }
+.progressLine { display: flex; align-items: center; gap: 15px; margin: 20px 0 15px; }
+.progressTrack { width: min(220px, 100%); height: 8px; overflow: hidden; border-radius: 999px; background: #e7ddd4; }
+.progressTrack span { display: block; height: 100%; border-radius: inherit; background: var(--burgundy); transition: width 300ms ease; }
+.progressLine strong { white-space: nowrap; font-size: 0.82rem; }
+.bookDescription { max-width: 330px; margin: 0 0 16px; color: var(--muted); font-size: 0.85rem; line-height: 1.45; }
 
-.tagline {
-  margin: 0 0 24px;
-  color: var(--burgundy);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-}
+.activityPanel { padding-left: 38px; border-left: 1px solid var(--border); }
+.activityPanel h2 { margin: 0 0 22px; color: var(--ink); font-family: var(--serif); font-size: 1.8rem; font-weight: 500; letter-spacing: -0.04em; }
+.activityItem { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 17px; }
+.activityAvatar { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 50%; background: #d7c2b8; color: #49362e; font-size: 0.72rem; font-weight: 700; }
+.activityItem p { margin: 3px 0 0; color: #5f524b; font-size: 0.8rem; line-height: 1.4; }
+.activityItem strong { color: var(--ink); }
+.activityItem small { color: #988b83; }
+.emptyActivity { margin: 0 0 18px; color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
 
-.signature {
-  margin: 25px 0 0;
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.3px;
-}
-
-.featuredBook {
-  color: inherit;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 22px;
-  background: #ffffffb8;
-  border: 1px solid #ffffff;
-  border-radius: 22px;
-  box-shadow: 0 12px 28px #1d1d1f12;
-  transition: transform 220ms ease, box-shadow 220ms ease;
-}
-
-.featuredBook:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 18px 34px #1d1d1f1c;
-}
-
-.featuredBook:hover img {
-  transform: scale(1.025);
-}
-
-.featuredBook img {
-  width: 165px;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 8px 18px #1d1d1f24;
-  transition: transform 220ms ease;
-}
-
-.featuredBook h2 {
-  margin: 0 0 5px;
-  font-size: 28px;
-}
-
-.featuredBook > div > p:last-child {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.section {
-  margin-bottom: 60px;
-}
-
-.section h2 {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 29px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-top: 25px;
-}
-
-.card {
-  color: inherit;
-  text-decoration: none;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  padding: 25px;
-  min-height: 190px;
-  border-radius: 22px;
-  box-shadow: 0 8px 25px #1d1d1f08;
-  transition: transform 220ms ease, box-shadow 220ms ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 32px #1d1d1f14;
-}
-
-.card h3 {
-  font-size: 23px;
-  margin-bottom: 8px;
-}
-
-.card p:not(.eyebrow) {
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-@media (max-width: 650px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero {
-    padding: 50px 25px;
-  }
-
-  .heroContent {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-
-  .featuredBook img {
-    width: 120px;
-  }
-
+@media (max-width: 760px) {
+  .hero { min-height: 730px; padding: 125px 22px 145px; }
+  .heroContent { align-items: stretch; flex-direction: column; gap: 38px; }
+  .hero h1 { font-size: clamp(3.25rem, 16vw, 4.6rem); }
+  .heroDescription { font-size: 1rem; }
+  .meetupCard { align-self: flex-end; width: min(300px, 100%); flex-basis: auto; margin-top: 0; }
+  .dashboardPanel { width: calc(100% - 28px); margin-top: -90px; padding: 22px; grid-template-columns: 1fr; }
+  .currentReading { align-items: flex-start; gap: 18px; }
+  .coverLink img { width: 106px; height: 152px; }
+  .progressLine { gap: 10px; }
+  .progressTrack { width: min(150px, 100%); }
+  .activityPanel { padding: 24px 0 0; border-top: 1px solid var(--border); border-left: 0; }
 }

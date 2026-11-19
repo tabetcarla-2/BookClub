@@ -3,22 +3,22 @@
 
 :root {
   font-family: 'DM Sans', sans-serif;
-  color: #171717;
-  background: #f5f5f0;
+  color: #17181b;
+  background: #f6f6f4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 
-  --cream: #f5f5f7;
+  --cream: #f6f6f4;
   --paper: #ffffff;
-  --ink: #1d1d1f;
-  --muted: #86868b;
-  --burgundy: #d85b72;
-  --rose: #f3dfe3;
-  --border: #e5e5e7;
-  --black: #1d1d1f;
+  --ink: #17181b;
+  --muted: #747579;
+  --burgundy: #a9615d;
+  --rose: #eeeeec;
+  --border: #dededc;
+  --black: #17181b;
 
-  --serif: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --serif: 'Playfair Display', Georgia, serif;
   --sans: 'DM Sans', sans-serif;
 }
 
@@ -30,7 +30,22 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  position: relative;
   background: var(--cream);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  content: '';
+  pointer-events: none;
+  display: none;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
 }
 
 button, input {
@@ -72,15 +87,19 @@ a {
   padding: 14px 20px;
   font-size: 12px;
   text-decoration: none;
-  border-radius: 999px;
+  border-radius: 6px;
   transition: 0.2s ease;
-  box-shadow: 0 5px 14px #1d1d1f18;
+  box-shadow: 0 7px 18px #26364b1c;
 }
 
 .primary-button:hover {
   background: var(--burgundy);
   border-color: var(--burgundy);
   transform: translateY(-1px);
+}
+
+button, input, select, textarea {
+  accent-color: var(--burgundy);
 }
 
 .page,
@@ -114,15 +133,17 @@ a {
   width: min(1080px, 88%);
   min-height: calc(100vh - 150px);
   margin: 0 auto;
+  padding-bottom: 20px;
 }
 
 .footer {
   display: flex;
+  align-items: end;
   justify-content: space-between;
   gap: 15px;
   padding: 25px 6%;
   border-top: 1px solid var(--border);
-  background: var(--paper);
+  background: #fffdf7cc;
   color: var(--muted);
   font-size: 10px;
 }
@@ -130,6 +151,7 @@ a {
 @media (max-width: 600px) {
   .footer {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .main-content {

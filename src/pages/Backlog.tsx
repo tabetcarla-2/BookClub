@@ -378,7 +378,7 @@ function Backlog() {
 
   return (
     <section className={styles.page}>
-      <p className="eyebrow">THE NEVER-ENDING LIST</p>
+      <p className="eyebrow">BACKLOG</p>
       <h1>Books to <em>discover.</em></h1>
       <p className={styles.description}>Search the library, find the one, and add it to the club backlog.</p>
       <div className={styles.searchArea}>

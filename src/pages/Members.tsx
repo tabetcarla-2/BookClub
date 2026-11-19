@@ -107,7 +107,7 @@ function Members() {
 
   return (
     <section className={styles.page}>
-      <p className="eyebrow">THE READING ROLL CALL</p>
+      <p className="eyebrow">MEMBERS</p>
       <h1>Meet the <em>members.</em></h1>
       <p className={styles.description}>The people behind the pages, plus the books they have finished with the club.</p>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { CalendarIcon } from '../components/Icons'
 import styles from './Inspo.module.css'
 
 type PlaceSuggestion = { place_id: string; display_name: string; name?: string; lat: string; lon: string }
@@ -83,6 +84,9 @@ function Inspo() {
   const [searching, setSearching] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [rsvped, setRsvped] = useState(false)
+  const [upcomingEventId, setUpcomingEventId] = useState<string | null>(null)
+  const [rsvpMembers, setRsvpMembers] = useState<string[]>([])
 
   useEffect(() => {
     const query = name.trim()
@@ -124,15 +128,25 @@ function Inspo() {
       if (cancelled) return
       setVenues(baseVenues)
       setLoading(false)
-      const [groupVisitResult, profileResult, voteResult, ratingResult, commentResult] = venueIds.length > 0 ? await Promise.all([
-        supabase.from('venue_group_visits').select('venue_id, marked_by, tried_at').in('venue_id', venueIds),
+      const [eventResult, groupVisitResult, profileResult, voteResult, ratingResult, commentResult] = await Promise.all([
+        supabase.from('events').select('id, title, starts_at').eq('title', 'November book discussion').order('starts_at', { ascending: true }).limit(1).maybeSingle(),
+        venueIds.length > 0 ? supabase.from('venue_group_visits').select('venue_id, marked_by, tried_at').in('venue_id', venueIds) : Promise.resolve({ data: [] as GroupVisitRow[] }),
         supabase.from('profiles').select('id, full_name, username'),
-        supabase.from('venue_votes').select('venue_id, user_id, vote').in('venue_id', venueIds),
-        supabase.from('venue_ratings').select('venue_id, user_id, rating').in('venue_id', venueIds),
-        supabase.from('venue_comments').select('id, venue_id, user_id, content').in('venue_id', venueIds).order('created_at', { ascending: true }),
-      ]) : [{ data: [] as GroupVisitRow[] }, { data: [] }, { data: [] as VoteRow[] }, { data: [] as RatingRow[] }, { data: [] as CommentRow[] }]
+        venueIds.length > 0 ? supabase.from('venue_votes').select('venue_id, user_id, vote').in('venue_id', venueIds) : Promise.resolve({ data: [] as VoteRow[] }),
+        venueIds.length > 0 ? supabase.from('venue_ratings').select('venue_id, user_id, rating').in('venue_id', venueIds) : Promise.resolve({ data: [] as RatingRow[] }),
+        venueIds.length > 0 ? supabase.from('venue_comments').select('id, venue_id, user_id, content').in('venue_id', venueIds).order('created_at', { ascending: true }) : Promise.resolve({ data: [] as CommentRow[] }),
+      ])
       if (cancelled) return
+      const event = eventResult.data as { id: string; title: string; starts_at: string } | null
+      setUpcomingEventId(event?.id ?? null)
       const names = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile.full_name || `@${profile.username}`]))
+      if (event) {
+        const { data: rsvps } = await supabase.from('event_rsvps').select('user_id').eq('event_id', event.id)
+        if (!cancelled) {
+          setRsvped((rsvps ?? []).some((rsvp) => rsvp.user_id === user.id))
+          setRsvpMembers((rsvps ?? []).map((rsvp) => names.get(rsvp.user_id) ?? 'a member'))
+        }
+      }
       const groupVisits = (groupVisitResult.data ?? []) as GroupVisitRow[]
       const votes = (voteResult.data ?? []) as VoteRow[]
       const ratings = (ratingResult.data ?? []) as RatingRow[]
@@ -153,6 +167,11 @@ function Inspo() {
   }, [user])
 
   useEffect(() => {
+    if (!user) return
+    try { setRsvped(localStorage.getItem(`bookclub-rsvp-${user.id}`) === 'true') } catch { /* RSVP cache is optional. */ }
+  }, [user])
+
+  useEffect(() => {
     if (!user || venues.length === 0) return
     try { localStorage.setItem(`bookclub-meetups-${user.id}`, JSON.stringify(venues)) } catch { /* Cache is optional. */ }
   }, [user, venues])
@@ -164,6 +183,21 @@ function Inspo() {
     setCoordinates({ latitude: Number(suggestion.lat), longitude: Number(suggestion.lon) })
     setPlaceSelected(true)
     setSuggestions([])
+  }
+
+  async function toggleRsvp() {
+    const next = !rsvped
+    if (!supabase || !user || !upcomingEventId) {
+      setRsvped(next)
+      return
+    }
+    const result = next
+      ? await supabase.from('event_rsvps').upsert({ event_id: upcomingEventId, user_id: user.id })
+      : await supabase.from('event_rsvps').delete().eq('event_id', upcomingEventId).eq('user_id', user.id)
+    if (result.error) { setError(result.error.message); return }
+    const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'you'
+    setRsvped(next)
+    setRsvpMembers((current) => next ? Array.from(new Set([...current, displayName])) : current.filter((member) => member !== displayName))
   }
 
   function categoryLabel(value: string) { return value.split(',').map((item) => item === 'wine-bar' ? 'Wine bar' : item.charAt(0).toUpperCase() + item.slice(1)).join(' · ') }
@@ -276,7 +310,23 @@ function Inspo() {
   })
 
   return <section className={styles.page}>
-    <p className="eyebrow">MEET, READ, REPEAT</p><h1>Our meeting <em>spots.</em></h1><p className={styles.description}>Recommend a place for the next chapter of the book club, then keep track of where you have actually been.</p>
+    <p className="eyebrow">MEETUPS</p><h1>Our meeting <em>spots.</em></h1><p className={styles.description}>Recommend a place for the next chapter of the book club, then keep track of where you have actually been.</p>
+    <section className={styles.upcomingMeeting}>
+      <div className={styles.upcomingDetails}>
+        <p className="eyebrow">UPCOMING MEETUP</p>
+        <h2>November book discussion</h2>
+        <p className={styles.meetingMeta}>Thursday, November 21 · 7:00 PM</p>
+        <p className={styles.meetingMeta}>Location to be decided by the club</p>
+        <button type="button" className={`${styles.rsvpButton} ${rsvped ? styles.rsvped : ''}`} onClick={toggleRsvp}>{rsvped ? '✓ RSVP’d' : 'RSVP'}</button>
+        <p className={styles.rsvpList}>{rsvpMembers.length > 0 ? `${rsvpMembers.join(', ')} ${rsvpMembers.length === 1 ? 'is' : 'are'} coming.` : 'No one has RSVP’d yet.'}</p>
+      </div>
+      <aside className={styles.calendarCard} aria-label="November meetup date">
+        <CalendarIcon size={19} />
+        <span>November 2026</span>
+        <strong>21</strong>
+        <small>THU · 7 PM</small>
+      </aside>
+    </section>
     <div className={styles.venueSection} data-trial-filter={trialFilter} data-visible-count={visibleVenues.length}>
       <div className={styles.sectionHeading}><div><p className="eyebrow">VENUE SUGGESTIONS</p><h2>Where should we meet?</h2></div><div className={styles.headingActions}><button type="button" className="primary-button" onClick={() => setShowAddForm((open) => !open)}>{showAddForm ? 'Close' : '+ Add place'}</button><div className={styles.viewToggle}><button type="button" className={view === 'cards' ? styles.activeView : ''} onClick={() => setView('cards')}>Cards</button><button type="button" className={view === 'map' ? styles.activeView : ''} onClick={() => setView('map')}>Map view</button></div></div></div>
       {showAddForm && <div className={styles.addPanel}><div className={styles.addPanelIntro}><strong>Add a meeting spot</strong><span>Search a place and choose the exact result so its pin lands correctly.</span></div><div className={styles.venueForm}><div className={styles.addressSearch}><label htmlFor="venue-search">Place name</label><input id="venue-search" value={name} onChange={(e) => { setName(e.target.value); setPlaceSelected(false); setCoordinates(null); setAddress('') }} placeholder="Search a cafe, library, or restaurant..." autoComplete="off" />{(searching || suggestions.length > 0) && <div className={styles.suggestions}>{searching && <p>Searching Manhattan...</p>}{suggestions.map((suggestion) => <button type="button" key={suggestion.place_id} onClick={() => chooseSuggestion(suggestion)}><strong>{suggestion.name || suggestion.display_name.split(',')[0]}</strong><small>{cleanAddress(suggestion.display_name, suggestion.name || suggestion.display_name.split(',')[0])}</small></button>)}</div>}</div>{address && <p className={styles.selectedAddress}><span>Address selected</span><strong>{address}</strong></p>}<label className={styles.categoryField}>Category<select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Place category"><option value="cafe">Cafe</option><option value="library">Library</option><option value="bookstore">Bookstore</option><option value="wine-bar">Wine bar</option><option value="other">Other</option></select></label><label className={styles.notesField}>Note<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Why recommend it? (optional)" /></label><button className="primary-button" onClick={suggestVenue} disabled={saving || !address}>{saving ? 'Adding...' : 'Save place'}</button></div></div>}

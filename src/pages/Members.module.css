@@ -38,6 +38,8 @@
   box-shadow: 0 8px 24px #1d1d1f08;
 }
 
+.member:nth-child(4n + 2), .member:nth-child(4n + 3), .member:nth-child(4n + 4) { background: var(--paper); }
+
 .avatar {
   display: grid;
   place-items: center;

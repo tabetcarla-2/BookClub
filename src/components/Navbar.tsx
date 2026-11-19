@@ -1,5 +1,6 @@
 
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import styles from './Navbar.module.css'
@@ -14,18 +15,24 @@ const links = [
 
 function Navbar() {
   const { user } = useAuth()
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reader'
+  const location = useLocation()
+  const [profile, setProfile] = useState<{ full_name: string | null; username: string | null; avatar_url: string | null } | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    if (!supabase || !user) { setProfile(null); return }
+    supabase.from('profiles').select('full_name, username, avatar_url').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!cancelled) setProfile(data)
+    })
+    return () => { cancelled = true }
+  }, [user])
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reader'
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null
   const initials = displayName.slice(0, 1).toUpperCase()
 
-  async function signOut() {
-    await supabase?.auth.signOut()
-  }
-
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${location.pathname === '/' ? styles.homeHeader : ''}`}>
       <NavLink to="/" className={styles.brand}>
-        <span className={styles.symbol}>✳</span>
-        the reading room
+        nyc book club
       </NavLink>
 
       <nav className={styles.navigation}>
@@ -45,10 +52,9 @@ function Navbar() {
 
       <div className={styles.account}>
         <NavLink to="/profile" className={styles.profileLink}>
-          <span className={styles.avatar}>{initials}</span>
+          {avatarUrl ? <img className={styles.avatar} src={avatarUrl} alt={`${displayName}'s profile`} /> : <span className={styles.avatar}>{initials}</span>}
           <span className={styles.accountText}><strong>My profile</strong><small>{displayName}</small></span>
         </NavLink>
-        <button type="button" className={styles.signOut} onClick={signOut} aria-label="Sign out">↗</button>
       </div>
     </header>
   )

@@ -9,10 +9,37 @@
   justify-content: space-between;
   align-items: center;
   gap: 30px;
-  background: #ffffffd9;
-  border-bottom: 1px solid #e5e5e780;
+  background: #fffdf7e8;
+  border-bottom: 1px solid var(--border);
   color: var(--ink);
   backdrop-filter: saturate(180%) blur(18px);
+}
+
+.homeHeader {
+  position: absolute;
+  width: 100%;
+  border-bottom-color: transparent;
+  background: transparent;
+  color: #fff;
+}
+
+.homeHeader .brand,
+.homeHeader .navLink,
+.homeHeader .accountText,
+.homeHeader .signOut {
+  color: #fff;
+}
+
+.homeHeader .navLink:hover,
+.homeHeader .navLink.active {
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+}
+
+.homeHeader .avatar {
+  border-color: rgb(255 255 255 / 0.45);
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
 }
 
 .brand {
@@ -26,11 +53,6 @@
   letter-spacing: -0.4px;
   color: var(--ink);
   white-space: nowrap;
-}
-
-.symbol {
-  color: var(--burgundy);
-  font-size: 19px;
 }
 
 .navigation {
@@ -55,7 +77,7 @@
 
 .navLink:hover,
 .active {
-  background: #f0f0f2;
+  background: var(--butter);
   color: var(--ink);
 }
 
@@ -78,17 +100,19 @@
   place-items: center;
   width: 30px;
   height: 30px;
+  overflow: hidden;
   background: var(--rose);
   color: var(--ink);
   border-radius: 50%;
   font-size: 12px;
   font-weight: 700;
+  object-fit: cover;
 }
 
 .accountText { display: flex; flex-direction: column; gap: 2px; }
 .accountText strong { font-size: 11px; font-weight: 600; }
 .accountText small { color: var(--muted); font-size: 9px; }
-.signOut { border: 0; background: transparent; color: var(--muted); font-size: 18px; padding: 5px; }
+.signOut { border: 0; background: transparent; color: var(--muted); font-size: 10px; padding: 5px 0; }
 .signOut:hover { color: var(--burgundy); }
 
 @media (max-width: 900px) {
