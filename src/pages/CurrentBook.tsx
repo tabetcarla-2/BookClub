@@ -209,6 +209,8 @@ function CurrentBook() {
     setReviewOpen(false)
   }
 
+  const rankedMemberProgress = [...memberProgress].sort((a, b) => b.progress - a.progress || a.name.localeCompare(b.name))
+
   return (
     <section className={styles.page}>
       <p className="eyebrow">NOVEMBER 2026 · CURRENT BOOK</p>
@@ -240,11 +242,11 @@ function CurrentBook() {
 
       {celebrationOpen && <div className={styles.celebrationBackdrop} role="dialog" aria-modal="true" aria-labelledby="celebration-title"><div className={styles.celebration}><span className={styles.confetti} aria-hidden="true">✦</span><p className="eyebrow">ONE MORE BOOK FOR THE CLUB</p><h2 id="celebration-title">You finished it.</h2><p>Nice work. Your thoughts are officially wanted.</p><div className={styles.celebrationActions}><button type="button" className="primary-button" onClick={() => { setCelebrationOpen(false); setReviewOpen(true) }}>Give your review</button><button type="button" className={styles.dismissButton} onClick={() => setCelebrationOpen(false)}>Maybe later</button></div></div></div>}
 
-      {memberProgress.length > 0 && <section className={styles.clubProgressSection}>
+      <section className={styles.clubProgressSection}>
         <p className="eyebrow">THE CLUB, READING ALONG</p>
-        <h2>Where everyone is.</h2>
-        <div className={styles.memberProgressList}>{memberProgress.map((member) => <div className={styles.memberProgress} key={member.id}><div className={styles.memberProgressLabel}><span>{member.name}</span><strong>{member.status} · {member.progress}%</strong></div><div className={styles.memberTrack}><span className={member.status === 'completed' ? styles.memberComplete : member.status === 'skipping' ? styles.memberSkipping : ''} style={{ width: `${member.status === 'completed' ? 100 : member.progress}%` }} /></div></div>)}</div>
-      </section>}
+        <h2>Current read leaderboard.</h2>
+        {rankedMemberProgress.length > 0 ? <div className={styles.memberProgressList}>{rankedMemberProgress.map((member, index) => <div className={styles.memberProgress} key={member.id}><span className={styles.rank}>{index + 1}</span><div className={styles.memberProgressDetails}><div className={styles.memberProgressLabel}><span>{member.name}</span><strong>{member.status} · {member.status === 'completed' ? 100 : member.progress}%</strong></div><div className={styles.memberTrack}><span className={member.status === 'completed' ? styles.memberComplete : member.status === 'skipping' ? styles.memberSkipping : ''} style={{ width: `${member.status === 'completed' ? 100 : member.progress}%` }} /></div></div></div>)}</div> : <p className={styles.archiveEmpty}>Member progress will appear here once the club starts reading.</p>}
+      </section>
 
       <section className={styles.previousReadsSection}>
         <p className="eyebrow">THE CLUB ARCHIVE</p>
