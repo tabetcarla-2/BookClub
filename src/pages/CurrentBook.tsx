@@ -72,6 +72,21 @@ function CurrentBook() {
   useEffect(() => {
     async function loadCurrentBook() {
       if (!supabase || !user) { setCurrentLoading(false); return }
+      const cacheKey = `bookclub-current-${user.id}`
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached) as { book?: Book; progress?: number; status?: ReadingStatus; memberProgress?: MemberProgress[]; currentReviews?: CurrentReview[] }
+          if (parsed.book) setBook(parsed.book)
+          if (typeof parsed.progress === 'number') setProgress(parsed.progress)
+          if (parsed.status) setStatus(parsed.status)
+          if (parsed.memberProgress) setMemberProgress(parsed.memberProgress)
+          if (parsed.currentReviews) setCurrentReviews(parsed.currentReviews)
+          if (parsed.book) setCurrentLoading(false)
+        }
+      } catch {
+        // Ignore unavailable or malformed browser cache and load from Supabase.
+      }
       const { data: current, error: currentError } = await supabase.from('club_books').select('club_id, book_id').eq('is_current', true).limit(1).maybeSingle()
       if (currentError) { setLoadError(currentError.message); setCurrentLoading(false); return }
       if (!current) { setLoadError('No current club book has been set yet.'); setCurrentLoading(false); return }
@@ -91,7 +106,7 @@ function CurrentBook() {
           setStatus(savedProgress.status)
           setProgressOpen(savedProgress.status !== 'completed' && savedProgress.status !== 'skipping')
         }
-      }
+      } else { setProgress(0); setStatus('reading'); setProgressOpen(true) }
       if (review) { setReviewRating(review.rating); setReviewComment(review.comment ?? '') }
       const progressByUser = new Map((allProgress ?? []).map((item) => [item.user_id, item]))
       const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name || profile.username]))
@@ -105,6 +120,9 @@ function CurrentBook() {
           status: saved?.status === 'want_to_read' ? 'not started' : saved?.status?.replace('_', ' ') ?? 'not started',
         }
       }))
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ book: selectedBook ?? book, progress: savedProgress?.progress ?? 0, status: savedProgress?.status ?? 'reading', memberProgress: (profiles ?? []).map((profile) => { const saved = progressByUser.get(profile.id); return { id: profile.id, name: profile.full_name || profile.username, progress: saved?.progress ?? 0, status: saved?.status === 'want_to_read' ? 'not started' : saved?.status?.replace('_', ' ') ?? 'not started' } }), currentReviews: (allReviews ?? []).map((item) => ({ id: item.id, userId: item.user_id, author: names.get(item.user_id) ?? 'a member', rating: item.rating, comment: item.comment })) }))
+      } catch { /* Cache is optional. */ }
       // The current book and leaderboard can render now; historical reads load
       // separately so they do not delay the main page.
       setCurrentLoading(false)
@@ -163,6 +181,11 @@ function CurrentBook() {
     }
     loadCurrentBook()
   }, [user])
+
+  useEffect(() => {
+    if (!user || book.id.startsWith('demo-') || dirty) return
+    try { localStorage.setItem(`bookclub-current-${user.id}`, JSON.stringify({ book, progress, status, memberProgress, currentReviews })) } catch { /* Cache is optional. */ }
+  }, [book, currentReviews, dirty, memberProgress, progress, status, user])
 
   function markDirty() { setDirty(true); setSaved(false) }
 

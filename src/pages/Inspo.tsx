@@ -107,9 +107,23 @@ function Inspo() {
     let cancelled = false
     async function loadMeetups() {
       if (!supabase || !user) { setLoading(false); return }
+      const cacheKey = `bookclub-meetups-${user.id}`
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached) as Venue[]
+          if (Array.isArray(parsed)) { setVenues(parsed); setLoading(false) }
+        }
+      } catch {
+        // Ignore unavailable or malformed browser cache and load from Supabase.
+      }
       const { data, error: fetchError } = await supabase.from('venues').select('id, name, address, notes, category, categories, keywords, latitude, longitude, suggested_by').order('created_at')
       if (fetchError) { setError(fetchError.message); setLoading(false); return }
       const venueIds = (data ?? []).map((venue) => venue.id)
+      const baseVenues = (data ?? []).map((venue) => ({ id: venue.id, name: venue.name, address: cleanAddress(venue.address), notes: venue.notes, category: venue.category, categories: venue.categories?.length ? venue.categories : [venue.category], keywords: venue.keywords ?? [], latitude: venue.latitude, longitude: venue.longitude, suggestedBy: 'a member', suggestedById: venue.suggested_by, groupTried: false, groupMarkedBy: null, groupMarkedById: null, groupRating: null, groupRatingCount: 0, userRating: null, upvotes: 0, downvotes: 0, userVote: null, comments: [] })) as Venue[]
+      if (cancelled) return
+      setVenues(baseVenues)
+      setLoading(false)
       const [groupVisitResult, profileResult, voteResult, ratingResult, commentResult] = venueIds.length > 0 ? await Promise.all([
         supabase.from('venue_group_visits').select('venue_id, marked_by, tried_at').in('venue_id', venueIds),
         supabase.from('profiles').select('id, full_name, username'),
@@ -123,19 +137,25 @@ function Inspo() {
       const votes = (voteResult.data ?? []) as VoteRow[]
       const ratings = (ratingResult.data ?? []) as RatingRow[]
       const comments = (commentResult.data ?? []) as CommentRow[]
-      setVenues((data ?? []).map((venue) => {
+      const loadedVenues = (data ?? []).map((venue) => {
         const groupVisit = groupVisits.find((visit) => visit.venue_id === venue.id)
         const venueRatings = ratings.filter((rating) => rating.venue_id === venue.id)
         const venueVotes = votes.filter((vote) => vote.venue_id === venue.id)
         const groupRating = venueRatings.length > 0 ? venueRatings.reduce((sum, rating) => sum + Number(rating.rating), 0) / venueRatings.length : null
         const venueTagCategories = venue.categories?.length ? venue.categories : [venue.category]
         return { id: venue.id, name: venue.name, address: cleanAddress(venue.address), notes: venue.notes, category: venue.category, categories: venueTagCategories, keywords: venue.keywords ?? [], latitude: venue.latitude, longitude: venue.longitude, suggestedBy: names.get(venue.suggested_by) ?? 'a member', suggestedById: venue.suggested_by, groupTried: Boolean(groupVisit), groupMarkedBy: groupVisit ? names.get(groupVisit.marked_by) ?? 'a member' : null, groupMarkedById: groupVisit?.marked_by ?? null, groupRating, groupRatingCount: venueRatings.length, userRating: venueRatings.find((rating) => rating.user_id === user.id)?.rating ?? null, upvotes: venueVotes.filter((vote) => vote.vote === 1).length, downvotes: venueVotes.filter((vote) => vote.vote === -1).length, userVote: venueVotes.find((vote) => vote.user_id === user.id)?.vote ?? null, comments: comments.filter((comment) => comment.venue_id === venue.id).map((comment) => ({ id: comment.id, content: comment.content, author: names.get(comment.user_id) ?? 'a member' })) }
-      }))
-      setLoading(false)
+      })
+      setVenues(loadedVenues)
+      try { localStorage.setItem(cacheKey, JSON.stringify(loadedVenues)) } catch { /* Cache is optional. */ }
     }
     loadMeetups()
     return () => { cancelled = true }
   }, [user])
+
+  useEffect(() => {
+    if (!user || venues.length === 0) return
+    try { localStorage.setItem(`bookclub-meetups-${user.id}`, JSON.stringify(venues)) } catch { /* Cache is optional. */ }
+  }, [user, venues])
 
   function chooseSuggestion(suggestion: PlaceSuggestion) {
     const selectedName = suggestion.name || suggestion.display_name.split(',')[0]

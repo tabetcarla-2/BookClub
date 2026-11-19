@@ -160,6 +160,18 @@ function Backlog() {
 
     async function loadBacklog() {
       if (!supabase || !user) { setBacklogLoading(false); return }
+      const cacheKey = `bookclub-backlog-${user.id}`
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached) as { books?: BacklogBook[]; interactions?: Record<string, BookInteraction> }
+          if (parsed.books) setBooks(parsed.books)
+          if (parsed.interactions) setInteractions(parsed.interactions)
+          if (parsed.books) setBacklogLoading(false)
+        }
+      } catch {
+        // Ignore unavailable or malformed browser cache and load from Supabase.
+      }
       const [{ data, error: fetchError }, { data: profiles }] = await Promise.all([
         supabase.from('backlog_items').select('book_id, user_id').or(`user_id.eq.${user.id},visibility.eq.club`),
         supabase.from('profiles').select('id, full_name, username'),
@@ -216,11 +228,17 @@ function Backlog() {
       if (cancelled) return
       setBooks(enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })))
       setInteractions(interactionMap)
+      try { localStorage.setItem(cacheKey, JSON.stringify({ books: enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })), interactions: interactionMap })) } catch { /* Cache is optional. */ }
     }
     loadBacklog()
 
     return () => { cancelled = true }
   }, [user])
+
+  useEffect(() => {
+    if (!user || books.length === 0) return
+    try { localStorage.setItem(`bookclub-backlog-${user.id}`, JSON.stringify({ books, interactions })) } catch { /* Cache is optional. */ }
+  }, [books, interactions, user])
 
   useEffect(() => {
     const query = bookTitle.trim()

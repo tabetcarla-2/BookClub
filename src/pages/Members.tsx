@@ -33,6 +33,16 @@ function Members() {
         setLoading(false)
         return
       }
+      const cacheKey = `bookclub-members-${user.id}`
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached) as Member[]
+          if (Array.isArray(parsed)) { setMembers(parsed); setLoading(false) }
+        }
+      } catch {
+        // Ignore unavailable or malformed browser cache and load from Supabase.
+      }
 
       const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id, username, full_name, avatar_url').order('full_name')
 
@@ -83,11 +93,17 @@ function Members() {
       }
 
       setMembers((currentMembers) => currentMembers.map((member) => ({ ...member, badges: badgesByUser.get(member.id) ?? [] })))
+      try { localStorage.setItem(cacheKey, JSON.stringify(initialMembers.map((member) => ({ ...member, badges: badgesByUser.get(member.id) ?? [] })))) } catch { /* Cache is optional. */ }
     }
 
     loadMembers()
     return () => { cancelled = true }
   }, [user])
+
+  useEffect(() => {
+    if (!user || members.length === 0) return
+    try { localStorage.setItem(`bookclub-members-${user.id}`, JSON.stringify(members)) } catch { /* Cache is optional. */ }
+  }, [members, user])
 
   return (
     <section className={styles.page}>
