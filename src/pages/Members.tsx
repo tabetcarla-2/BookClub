@@ -91,7 +91,12 @@ function Members() {
         const ratings = reviewsByUser.get(profile.id) ?? []
         const completedBooks = Array.from(readsByUser.get(profile.id) ?? [])
         for (const row of reviewRows.filter((review) => review.user_id === profile.id)) reviewsByBook.set(`${profile.id}:${row.book_id}`, row.rating)
-        const badges = completedBooks.map((bookId) => { const book = booksById.get(bookId); return book ? { id: book.id, title: book.title, author: book.author, rating: reviewsByBook.get(`${profile.id}:${bookId}`) ?? null, coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) } : null }).filter((badge): badge is Badge => Boolean(badge))
+        const badges: Badge[] = []
+        for (const bookId of completedBooks) {
+          const book = booksById.get(bookId)
+          if (!book) continue
+          badges.push({ id: book.id, title: book.title, author: book.author, rating: reviewsByBook.get(`${profile.id}:${bookId}`) ?? null, coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) })
+        }
         const finishedHistoricalBooks = completedBooks.filter((bookId) => historicalClubBookIds.has(bookId)).length
         const completionRate = historicalClubBookIds.size ? Math.round((finishedHistoricalBooks / historicalClubBookIds.size) * 100) : 0
         return { id: profile.id, name: profile.full_name || profile.username, username: `@${profile.username}`, avatarUrl: profile.avatar_url, status: currentStatus.status, statusKey: currentStatus.statusKey, progress, booksRead: completedBooks.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, completionRate, badges }
