@@ -1,80 +1,133 @@
-
-.page {
-  padding: 55px 0;
-}
-
-.page h1 {
-  font-family: var(--serif);
-  font-size: 60px;
-  letter-spacing: -1.5px;
-  font-weight: 400;
-}
-
-.page h1 em {
-  color: var(--burgundy);
-}
-
-.description {
-  max-width: 450px;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-  margin-top: 35px;
-}
-
-.card {
-  min-height: 230px;
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border-radius: 24px;
-  box-shadow: 0 10px 28px #1d1d1f0b;
-}
-
-.card > span {
-  font-size: 10px;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-}
-
-.card h2 {
-  font-family: var(--serif);
-  font-size: 29px;
-  font-weight: 400;
-}
-
-.card p {
-  font-family: var(--serif);
-  color: #776d64;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.pink { background: linear-gradient(135deg, #fff, var(--rose)); }
-.green { background: #dce8e1; }
-.yellow { background: #f0e7bc; }
-.lilac { background: #e5e0ef; }
-
+.page { padding: 55px 0 80px; }
+.page h1 { font-family: var(--serif); font-size: 60px; letter-spacing: -1.5px; font-weight: 400; }
+.page h1 em { color: var(--burgundy); }
+.description { max-width: 560px; color: var(--muted); font-size: 13px; line-height: 1.8; }
 .venueSection { margin-top: 55px; }
-.venueForm { display: flex; gap: 10px; margin: 20px 0; }
-.venueForm input { min-width: 0; flex: 1; padding: 13px; border: 1px solid var(--border); background: var(--paper); }
-.venues { display: grid; gap: 10px; }
-.venues article { padding: 20px; background: var(--paper); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 7px 22px #1d1d1f08; }
-.venues h2 { margin-bottom: 5px; font-size: 22px; }
-.venues p, .venues small { color: var(--muted); font-size: 12px; }
+.sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.sectionHeading h2 { margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 400; }
+.headingActions { display: flex; align-items: center; gap: 10px; }
+.viewToggle { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--cream); }
+.viewToggle button { border: 0; border-radius: 999px; padding: 8px 13px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.viewToggle button:hover, .viewToggle .activeView { background: var(--paper); color: var(--ink); box-shadow: 0 2px 8px #1d1d1f10; }
+.addPanel { position: relative; z-index: 3; margin: 24px 0; padding: 18px; border: 1px solid var(--border); border-radius: 20px; background: var(--paper); box-shadow: 0 10px 28px #1d1d1f0b; }
+.addPanelIntro { display: grid; gap: 4px; margin-bottom: 16px; }
+.addPanelIntro strong { font-size: 13px; }
+.addPanelIntro span { color: var(--muted); font-size: 11px; }
+.venueForm { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(150px, .7fr); gap: 12px; align-items: end; }
+.venueForm label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; }
+.venueForm .categoryField { display: none; }
+.addressSearch { grid-column: 1 / -1; }
+.venueForm input { min-width: 0; padding: 13px 15px; border: 1px solid var(--border); border-radius: 999px; background: var(--paper); color: var(--ink); outline: none; font: inherit; font-size: 12px; }
+.venueForm select { min-width: 0; padding: 13px 15px; border: 1px solid var(--border); border-radius: 999px; background: var(--paper); color: var(--ink); outline: none; font: inherit; font-size: 12px; }
+.venueForm input:focus { border-color: var(--burgundy); }
+.addressSearch { position: relative; min-width: 0; }
+.addressSearch > input { width: 100%; }
+.selectedAddress { grid-column: 1 / -1; display: grid; gap: 4px; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--cream); color: var(--muted); font-size: 10px; line-height: 1.4; }
+.selectedAddress strong { overflow: hidden; color: var(--ink); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.selectedAddress strong { color: var(--ink); font-weight: 500; }
+.suggestions { position: absolute; z-index: 5; top: calc(100% + 8px); left: 0; right: 0; padding: 6px; border: 1px solid var(--border); border-radius: 15px; background: var(--paper); box-shadow: 0 15px 35px #1d1d1f20; }
+.suggestions p { margin: 8px; color: var(--muted); font-size: 11px; }
+.suggestions button { display: grid; width: 100%; gap: 3px; padding: 9px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.suggestions button:hover { background: var(--cream); }
+.suggestions strong { font-size: 11px; }
+.suggestions small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.venueForm > button { justify-self: start; }
+.venueForm button:disabled { cursor: wait; opacity: .6; }
+.tagEditor { display: grid; grid-template-columns: 1fr 1.5fr; gap: 18px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.inlineTagEditor { display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 18px; align-items: end; margin-top: 16px; padding: 15px; border: 1px solid #e4c3cc; border-radius: 16px; background: #fff8fa; }
+.inlineTagEditor .cancelEdit { border: 1px solid #d9b0bc; border-radius: 999px; padding: 7px 10px; background: var(--paper); color: var(--burgundy); font-size: 10px; cursor: pointer; }
+.inlineEditActions { display: flex; align-items: center; gap: 7px; }
+.inlineEditActions button { white-space: nowrap; }
+.saveEdit { border: 0; border-radius: 999px; padding: 8px 11px; background: var(--ink); color: var(--paper); font-size: 10px; cursor: pointer; }
+.saveEdit:hover { opacity: .8; }
+.fieldLabel { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; }
+.tagChoices, .activeTags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tagChoices button, .activeTags button { border: 1px solid var(--border); border-radius: 999px; padding: 6px 9px; background: var(--paper); color: var(--muted); font-size: 10px; cursor: pointer; }
+.tagChoices button:hover, .tagChoices .selectedTag { border-color: #b64a55; background: #fff0f4; color: #a34e6d; }
+.keywordInput { display: flex; gap: 6px; margin-top: 8px; }
+.keywordInput input { min-width: 0; flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-size: 10px; }
+.keywordInput button { border: 1px solid var(--border); border-radius: 999px; padding: 7px 10px; background: var(--paper); color: var(--ink); font-size: 10px; cursor: pointer; }
+.keywordInput .cancelEdit { color: var(--burgundy); }
+.activeTags { margin-top: 7px; }
+.activeTags button { border-color: #d9b0bc; background: #fff5f7; color: #a34e6d; }
+.filterRow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 22px 0 12px; color: var(--muted); font-size: 10px; }
+.filterSelect select { min-width: 170px; border: 1px solid var(--border); border-radius: 999px; padding: 7px 28px 7px 11px; background: var(--paper); color: var(--ink); font: inherit; font-size: 10px; cursor: pointer; }
+.clearFilter { border: 0; padding: 5px 2px; background: transparent; color: var(--burgundy); font-size: 10px; cursor: pointer; }
+.clearFilter:hover { text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.filterRow button { border: 1px solid var(--border); border-radius: 999px; padding: 7px 11px; background: var(--paper); color: var(--muted); font-size: 10px; cursor: pointer; }
+.filterRow button:hover, .filterRow .activeFilter { border-color: var(--burgundy); background: #fff1f4; color: var(--burgundy); }
+.venueSection[data-trial-filter="tried"] .venueCard:not(.groupTriedCard), .venueSection[data-trial-filter="untried"] .groupTriedCard { display: none; }
+.venues { display: grid; gap: 12px; }
+.venueCard { padding: 20px; background: var(--paper); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 7px 22px #1d1d1f08; }
+.groupTriedCard { border-color: #d8a7b2; background: linear-gradient(135deg, #fff 0%, #fff8fa 100%); }
+.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+.cardActions { display: flex; align-items: center; gap: 8px; }
+.venueCard h2 { margin: 0 0 4px; font-family: var(--serif); font-size: 23px; font-weight: 400; }
+.venueTitle { cursor: pointer; transition: color .2s ease; }
+.venueTitle:hover { color: var(--burgundy); }
+.category { display: inline-block; margin-bottom: 6px; padding: 4px 8px; border-radius: 999px; font-size: 9px; letter-spacing: .4px; text-transform: uppercase; }
+.cafe { background: #f7e6d5; color: #97613b; }
+.library { background: #e5e0ef; color: #66528d; }
+.bookstore { background: #f5dfe7; color: #a34e6d; }
+.wine-bar { background: #eadde7; color: #7a466a; }
+.other { background: #e8ecef; color: #596f80; }
+.address, .notes, .cardFooter { color: var(--muted); font-size: 12px; }
+.address { margin: 0; }
+.notes { margin: 14px 0 0; line-height: 1.6; }
+.triedButton { flex-shrink: 0; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; background: var(--paper); color: var(--muted); font-size: 10px; cursor: pointer; }
+.triedButton:hover, .triedButton.tried { border-color: #b64a55; background: #fff0f0; color: #b64a55; }
+.groupRating { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; padding: 11px 13px; border-radius: 14px; background: #fff1f4; color: var(--muted); font-size: 10px; }
+.groupRating > div { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.groupRating strong { color: var(--ink); font-size: 11px; }
+.groupRating small { color: var(--muted); font-size: 10px; }
+.ratingStars { display: inline-flex; gap: 1px; }
+.ratingStars button { border: 0; padding: 0; background: transparent; color: #d7c5c9; font-size: 18px; line-height: 1; cursor: pointer; }
+.ratingStars button:hover, .ratingStars .filledStar { color: #b64a55; }
+.triedLabel { color: #a34e6d; font-size: 10px; white-space: nowrap; }
+.untriedLabel { margin: 14px 0 0; color: var(--muted); font-size: 10px; }
+.deleteButton { border: 0; padding: 5px 0; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
+.deleteButton:hover { color: #b64a55; text-decoration: underline; }
+.editButton { border: 1px solid var(--border); border-radius: 999px; padding: 7px 10px; background: var(--paper); color: var(--muted); font-size: 10px; cursor: pointer; }
+.editButton:hover { border-color: var(--ink); color: var(--ink); }
+.cardTags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.cardTags span { padding: 4px 7px; border-radius: 999px; background: #f8e8ed; color: #9e5b72; font-size: 9px; }
+.socialRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.voteGroup { display: flex; gap: 5px; }
+.voteGroup button { border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: var(--paper); color: var(--muted); font-size: 10px; cursor: pointer; }
+.voteGroup button:hover, .voteGroup .activeVote { border-color: #9e5b72; background: #f8e8ed; color: #9e5b72; }
+.voteGroup .activeDownvote { border-color: #596f80; background: #e9f0f4; color: #596f80; }
+.mapLink { border: 0; padding: 0; background: transparent; color: var(--burgundy); font-size: 10px; cursor: pointer; }
+.mapLink:hover { text-decoration: underline; }
+.cardFooter { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 10px; }
+.comments { display: grid; gap: 5px; margin-top: 12px; }
+.comments p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.comments p strong { color: var(--ink); }
+.commentForm { display: flex; gap: 5px; margin-top: 5px; }
+.commentForm input { min-width: 0; flex: 1; padding: 7px 9px; border: 1px solid var(--border); border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-size: 10px; }
+.commentForm button { border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: var(--paper); color: var(--ink); font-size: 10px; cursor: pointer; }
+.commentForm button:disabled { cursor: default; opacity: .45; }
+.mapView { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(210px, .6fr); gap: 14px; }
+.mapCanvas { position: relative; min-height: 390px; overflow: hidden; border: 1px solid var(--border); border-radius: 22px; background-color: #f4eee9; background-image: linear-gradient(30deg, #ffffff00 48%, #ffffff99 49%, #ffffff99 51%, #ffffff00 52%), linear-gradient(120deg, #ffffff00 48%, #ffffff99 49%, #ffffff99 51%, #ffffff00 52%); background-size: 90px 90px; }
+.mapTile { position: absolute; z-index: 0; display: block; width: 256px; height: 256px; max-width: none; }
+.mapPin { position: absolute; z-index: 2; display: flex; align-items: center; gap: 6px; border: 0; padding: 0; background: transparent; color: var(--ink); transform: translate(-12.5px, -50%); cursor: pointer; }
+.mapPin span, .mapList > a > span { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--burgundy); color: #fff; font-size: 10px; box-shadow: 0 4px 10px #8e405433; }
+.mapPin strong { padding: 5px 8px; border-radius: 8px; background: var(--paper); box-shadow: 0 3px 10px #1d1d1f14; font-size: 10px; white-space: nowrap; }
+.mapPin:hover strong { color: var(--burgundy); }
+.mapPin:hover span { background: #b64a55; transform: scale(1.12); }
+.mapNote { position: absolute; right: 15px; bottom: 13px; color: var(--muted); font-size: 10px; }
+.mapAttribution { position: absolute; z-index: 3; left: 8px; bottom: 7px; padding: 2px 4px; background: #fff9; color: #555; font-size: 9px; }
+.mapList { display: grid; align-content: start; gap: 8px; }
+.mapListItem { display: grid; grid-template-columns: auto 1fr; column-gap: 9px; align-items: center; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 13px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; }
+.mapListItem:hover, .selectedMapItem { border-color: var(--burgundy); }
+.mapList strong, .mapList small { grid-column: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapList strong { font-size: 11px; }
+.mapList small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.mapList > a > span { grid-row: 1 / span 2; }
+.mapDetails { grid-column: 1 / -1; display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--cream); color: var(--muted); font-size: 11px; }
+.mapDetails strong { color: var(--ink); }
+.empty { padding: 40px; text-align: center; color: var(--muted); background: var(--paper); border: 1px solid var(--border); border-radius: 22px; }
 .error { color: #a33d43; font-size: 12px; }
-
-@media (max-width: 600px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .venueForm { flex-direction: column; }
-}
+@media (max-width: 800px) { .page h1 { font-size: 48px; } .mapView { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .tagEditor, .inlineTagEditor { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .sectionHeading { align-items: flex-start; flex-direction: column; } .headingActions { width: 100%; justify-content: space-between; } .venueForm { grid-template-columns: 1fr; } .addressSearch, .selectedAddress { grid-column: auto; } .venueForm > button { grid-column: auto; } .cardTop { flex-direction: column; } .mapCanvas { min-height: 310px; } }
