@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
+import coverImage from '../assets/husbands-secret-cover.png'
 import styles from './Profile.module.css'
 
 type ProfileData = { full_name: string; username: string; avatar_url: string | null }
@@ -79,6 +80,7 @@ function Profile() {
 
   const displayName = profile.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reader'
   const initials = displayName.slice(0, 1).toUpperCase()
+  const currentBookCover = currentBook && (currentBook.cover_url || (currentBook.title.toLowerCase() === "a husband's secret" ? coverImage : null))
 
   return <section className={styles.page}>
     <p className="eyebrow">YOUR PROFILE</p>
@@ -88,7 +90,7 @@ function Profile() {
       <div className={styles.avatarWrap}>{profile.avatar_url ? <img className={styles.avatar} src={profile.avatar_url} alt={`${displayName}'s profile`} /> : <div className={styles.avatar}>{initials}</div>}<label className={styles.avatarEdit}>{uploading ? 'Uploading…' : 'Edit photo'}<input type="file" accept="image/*" onChange={uploadAvatar} disabled={uploading} /></label></div>
       <div><h2>{displayName}</h2><p className={styles.muted}>@{profile.username || 'reader'}</p></div>
     </div>
-    <section className={styles.currentSection}><div className={styles.sectionHeading}><p className="eyebrow">CURRENT BOOK</p><span>{currentProgress?.status?.replace('_', ' ') || 'Not started'}</span></div>{loading ? <p className={styles.muted}>Loading your current book…</p> : currentBook ? <div className={styles.currentBook}>{currentBook.cover_url ? <img src={currentBook.cover_url} alt={`Cover of ${currentBook.title}`} /> : <div className={styles.coverFallback}>{currentBook.title.slice(0, 1)}</div>}<div><h2>{currentBook.title}</h2><p>{currentBook.author}</p>{currentProgress && <div className={styles.progress}><span style={{ width: `${currentProgress.progress}%` }} /><small>{currentProgress.progress}% complete</small></div>}</div></div> : <p className={styles.muted}>There is no current book yet.</p>}</section>
+    <section className={styles.currentSection}><div className={styles.sectionHeading}><p className="eyebrow">CURRENT BOOK</p><span>{currentProgress?.status?.replace('_', ' ') || 'Not started'}</span></div>{loading ? <p className={styles.muted}>Loading your current book…</p> : currentBook ? <div className={styles.currentBook}>{currentBookCover ? <img src={currentBookCover} alt={`Cover of ${currentBook.title}`} /> : <div className={styles.coverFallback}>{currentBook.title.slice(0, 1)}</div>}<div><h2>{currentBook.title}</h2><p>{currentBook.author}</p>{currentProgress && <div className={styles.progress}><span style={{ width: `${currentProgress.progress}%` }} /><small>{currentProgress.progress}% complete</small></div>}</div></div> : <p className={styles.muted}>There is no current book yet.</p>}</section>
     <section className={styles.badgesSection}><div className={styles.sectionHeading}><p className="eyebrow">BADGES</p><span>{badges.length} read</span></div>{loading ? <p className={styles.muted}>Loading your badges…</p> : badges.length === 0 ? <p className={styles.empty}>Your book-club badges will appear here when you mark a book as read.</p> : <div className={styles.badges}>{badges.map(({ book, rating, review }) => <article className={styles.badge} key={book.id}>{book.cover_url ? <img src={book.cover_url} alt="" /> : <div className={styles.coverFallback}>{book.title.slice(0, 1)}</div>}<div><h3>{book.title}</h3><p>{book.author}</p>{rating !== null && <div className={styles.rating}>{'★'.repeat(Math.round(rating))}<small>{rating}/5</small></div>}{review && <blockquote>“{review}”</blockquote>}</div></article>)}</div>}</section>
   </section>
 }

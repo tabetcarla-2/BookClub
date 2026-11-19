@@ -34,15 +34,29 @@ function Members() {
         return
       }
 
-      const [{ data: profiles, error: profilesError }, { data: completedProgress, error: progressError }] = await Promise.all([
-        supabase.from('profiles').select('id, username, full_name, avatar_url').order('full_name'),
-        supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed'),
-      ])
+      const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id, username, full_name, avatar_url').order('full_name')
 
       if (cancelled) return
-      if (profilesError || progressError) {
-        setError(profilesError?.message ?? progressError?.message ?? 'Could not load members.')
+      if (profilesError) {
+        setError(profilesError.message)
         setLoading(false)
+        return
+      }
+
+      const initialMembers = (profiles ?? []).map((profile) => ({
+        id: profile.id,
+        name: profile.full_name || profile.username,
+        username: `@${profile.id === user.id ? (user.user_metadata?.username || user.email?.split('@')[0] || profile.username) : profile.username}`,
+        avatarUrl: profile.avatar_url,
+        badges: [],
+      }))
+      setMembers(initialMembers)
+      setLoading(false)
+
+      const { data: completedProgress, error: progressError } = await supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed')
+      if (cancelled) return
+      if (progressError) {
+        setError(progressError.message)
         return
       }
 
@@ -68,14 +82,7 @@ function Members() {
         badgesByUser.set(progress.user_id, badges)
       }
 
-      setMembers((profiles ?? []).map((profile) => ({
-        id: profile.id,
-        name: profile.full_name || profile.username,
-        username: `@${profile.id === user.id ? (user.user_metadata?.username || user.email?.split('@')[0] || profile.username) : profile.username}`,
-        avatarUrl: profile.avatar_url,
-        badges: badgesByUser.get(profile.id) ?? [],
-      })))
-      setLoading(false)
+      setMembers((currentMembers) => currentMembers.map((member) => ({ ...member, badges: badgesByUser.get(member.id) ?? [] })))
     }
 
     loadMembers()

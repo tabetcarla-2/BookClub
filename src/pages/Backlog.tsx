@@ -128,7 +128,7 @@ async function refreshSavedDescription(book: Book): Promise<Book> {
 
 function Backlog() {
   const { user } = useAuth()
-  const { books: catalog, loading: catalogLoading, addBook } = useBooks()
+  const { books: catalog, addBook } = useBooks()
   const [bookTitle, setBookTitle] = useState('')
   const [books, setBooks] = useState<BacklogBook[]>([])
   const [suggestions, setSuggestions] = useState<OpenLibraryDoc[]>([])
@@ -160,7 +160,6 @@ function Backlog() {
 
     async function loadBacklog() {
       if (!supabase || !user) { setBacklogLoading(false); return }
-      if (catalogLoading) return
       const [{ data, error: fetchError }, { data: profiles }] = await Promise.all([
         supabase.from('backlog_items').select('book_id, user_id').or(`user_id.eq.${user.id},visibility.eq.club`),
         supabase.from('profiles').select('id, full_name, username'),
@@ -175,16 +174,28 @@ function Backlog() {
         if (!current.includes(name)) current.push(name)
         contributors.set(item.book_id, current)
       }
-      const savedBooks = catalog.filter((book) => ids.has(book.id))
-      const enrichedBooks = await Promise.all(savedBooks.map(refreshSavedDescription))
+      const { data: savedBooks, error: booksError } = ids.size > 0
+        ? await supabase.from('books').select('*').in('id', Array.from(ids))
+        : { data: [], error: null }
+      if (booksError) { setError(booksError.message); setBacklogLoading(false); return }
+      const baseBooks = savedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') }))
+      if (cancelled) return
+      setBooks(baseBooks)
+      setBacklogLoading(false)
+
+      // Show the saved club list immediately. Description and cover lookups can
+      // take a moment, so enrich the cards in the background instead of making
+      // the whole backlog wait for external book APIs.
+      const enrichedBooksPromise = Promise.all(savedBooks.map(refreshSavedDescription))
       const bookIds = savedBooks.map((book) => book.id)
-      const [voteResult, readResult, commentResult] = bookIds.length > 0
-        ? await Promise.all([
+      const interactionPromise = bookIds.length > 0
+        ? Promise.all([
           supabase.from('book_votes').select('book_id, user_id, vote').in('book_id', bookIds),
           supabase.from('book_reads').select('book_id, user_id').in('book_id', bookIds),
           supabase.from('book_comments').select('id, book_id, user_id, content, created_at').in('book_id', bookIds).order('created_at', { ascending: true }),
         ])
         : [{ data: [] as VoteRow[] }, { data: [] as ReadRow[] }, { data: [] as CommentRow[] }]
+      const [enrichedBooks, [voteResult, readResult, commentResult]] = await Promise.all([enrichedBooksPromise, interactionPromise])
       const votes = (voteResult.data ?? []) as VoteRow[]
       const reads = (readResult.data ?? []) as ReadRow[]
       const comments = (commentResult.data ?? []) as CommentRow[]
@@ -205,12 +216,11 @@ function Backlog() {
       if (cancelled) return
       setBooks(enrichedBooks.map((book) => ({ ...book, addedBy: contributors.get(book.id)?.join(', ') })))
       setInteractions(interactionMap)
-      setBacklogLoading(false)
     }
     loadBacklog()
 
     return () => { cancelled = true }
-  }, [catalog, catalogLoading, user])
+  }, [user])
 
   useEffect(() => {
     const query = bookTitle.trim()

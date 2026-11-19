@@ -47,8 +47,11 @@ const demoBook: Book = {
   description: 'A page-turning story about secrets, marriage, and the things we keep from the people closest to us. When a woman discovers a letter her husband wrote for her to read after his death, a private secret begins to reshape the lives of everyone around them. It is a sharp, emotional look at love, friendship, and the stories we tell ourselves.',
 }
 
+const husbandsSecretDescription = demoBook.description
+
 function CurrentBook() {
   const { user } = useAuth()
+  const [currentLoading, setCurrentLoading] = useState(true)
   const [book, setBook] = useState<Book>(demoBook)
   const [progress, setProgress] = useState(45)
   const [status, setStatus] = useState<ReadingStatus>('reading')
@@ -68,10 +71,10 @@ function CurrentBook() {
 
   useEffect(() => {
     async function loadCurrentBook() {
-      if (!supabase || !user) return
+      if (!supabase || !user) { setCurrentLoading(false); return }
       const { data: current, error: currentError } = await supabase.from('club_books').select('club_id, book_id').eq('is_current', true).limit(1).maybeSingle()
-      if (currentError) { setLoadError(currentError.message); return }
-      if (!current) { setLoadError('No current club book has been set yet.'); return }
+      if (currentError) { setLoadError(currentError.message); setCurrentLoading(false); return }
+      if (!current) { setLoadError('No current club book has been set yet.'); setCurrentLoading(false); return }
 
       const [{ data: selectedBook }, { data: savedProgress }, { data: review }, { data: profiles }, { data: allProgress }, { data: allReviews }] = await Promise.all([
         supabase.from('books').select('*').eq('id', current.book_id).single(),
@@ -102,6 +105,9 @@ function CurrentBook() {
           status: saved?.status === 'want_to_read' ? 'not started' : saved?.status?.replace('_', ' ') ?? 'not started',
         }
       }))
+      // The current book and leaderboard can render now; historical reads load
+      // separately so they do not delay the main page.
+      setCurrentLoading(false)
 
       const [{ data: completedBooks }, { data: historicalClubBooks }, { data: clubReads }] = await Promise.all([
         supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed').neq('book_id', current.book_id),
@@ -115,6 +121,7 @@ function CurrentBook() {
       ]))
       if (previousBookIds.length === 0) {
         setPreviousReads([parablePlaceholderRead])
+        setCurrentLoading(false)
         return
       }
 
@@ -152,6 +159,7 @@ function CurrentBook() {
         }]
       })
       setPreviousReads(loadedPreviousReads.some((book) => book.title.toLowerCase() === parablePlaceholderRead.title.toLowerCase()) ? loadedPreviousReads : [parablePlaceholderRead, ...loadedPreviousReads])
+      setCurrentLoading(false)
     }
     loadCurrentBook()
   }, [user])
@@ -192,6 +200,11 @@ function CurrentBook() {
   }
 
   const rankedMemberProgress = [...memberProgress].sort((a, b) => b.progress - a.progress || a.name.localeCompare(b.name))
+  const bookCover = book.cover_url || (book.title.toLowerCase() === "a husband's secret" ? coverImage : null)
+
+  if (currentLoading) {
+    return <section className={styles.page}><p className="eyebrow">CURRENT BOOK</p><p className={styles.muted}>Loading current book…</p></section>
+  }
 
   return (
     <section className={styles.page}>
@@ -199,16 +212,17 @@ function CurrentBook() {
       <h1>Currently <em>reading.</em></h1>
       {loadError && <p className={styles.loadError}>{loadError}</p>}
       <div className={styles.book}>
-        {book.cover_url ? <img className={styles.cover} src={book.cover_url} alt={`Cover of ${book.title}`} /> : <div className={styles.cover}><span>{book.title.toUpperCase()}</span><small>{book.author.toUpperCase()}</small></div>}
-        <div className={styles.info}><p className="eyebrow">NOVEMBER'S BOOK PICK</p><h2>{book.title}</h2><p className={styles.author}>{book.author}</p><p className={styles.description}>{book.description ?? 'Read along with the club and bring your favourite passages to our next discussion.'}</p></div>
+        {bookCover ? <img className={styles.cover} src={bookCover} alt={`Cover of ${book.title}`} /> : <div className={styles.cover}><span>{book.title.toUpperCase()}</span><small>{book.author.toUpperCase()}</small></div>}
+        <div className={styles.info}><p className="eyebrow">NOVEMBER'S BOOK PICK</p><h2>{book.title}</h2><p className={styles.author}>{book.author}</p><p className={styles.description}>{book.title.toLowerCase() === "a husband's secret" && (!book.description || book.description.length < 140) ? husbandsSecretDescription : book.description ?? 'Read along with the club and bring your favourite passages to our next discussion.'}</p></div>
       </div>
 
       <section className={styles.progressSection}>
         <div className={styles.sectionHeading}><div><div className={styles.progressHeading}><h2>Add your progress</h2><button type="button" className={`${styles.skipToggle} ${status === 'skipping' ? styles.skipActive : ''}`} onClick={toggleSkipping}>{status === 'skipping' ? '↩ Return to reading' : '⚑ Skip this book'}</button></div></div><span className={`${styles.statusBadge} ${styles[status]}`}>{status}</span></div>
         {status === 'completed' && !progressOpen ? <div className={styles.completedSummary}><div><strong>Completed</strong><p>You finished this book.</p></div><button type="button" className={styles.editProgress} onClick={() => setProgressOpen(true)}>Edit progress</button></div> : status === 'skipping' && !progressOpen ? <div className={styles.completedSummary}><div><strong className={styles.skippedText}>Skipped</strong><p>You are sitting this one out.</p></div><button type="button" className={styles.editProgress} onClick={() => setProgressOpen(true)}>Edit progress</button></div> : <>
-        <input className={`${styles.progressInput} ${status === 'skipping' ? styles.progressDisabled : ''} ${status === 'completed' ? styles.progressComplete : ''}`} type="range" min="0" max="100" value={progress} disabled={status !== 'reading'} onChange={(e) => { const nextProgress = Number(e.target.value); setProgress(nextProgress); setStatus(nextProgress === 100 ? 'completed' : 'reading'); setProgressOpen(true); markDirty() }} />
-        <div className={styles.progressLabel}><span>{status === 'skipping' ? 'Progress is paused while you skip this book' : status === 'completed' ? 'You finished this book' : 'How far are you?'}</span><strong>{status === 'completed' ? 100 : status === 'skipping' ? 0 : progress}%</strong></div>
-        <div className={styles.saveRow}>{saved && !dirty ? <p className={styles.savedMessage}>Saved</p> : <><p className={styles.muted}>{saveError || (dirty ? 'You have unsaved changes.' : '')}</p><button type="button" className="primary-button" disabled={!dirty || saving} onClick={saveProgress}>{saving ? 'Saving...' : 'Save progress'}</button></>}</div>
+        <div className={styles.progressRow}><input className={`${styles.progressInput} ${status === 'skipping' ? styles.progressDisabled : ''} ${status === 'completed' ? styles.progressComplete : ''}`} type="range" min="0" max="100" value={progress} disabled={status !== 'reading'} onChange={(e) => { const nextProgress = Number(e.target.value); setProgress(nextProgress); setStatus(nextProgress === 100 ? 'completed' : 'reading'); setProgressOpen(true); markDirty() }} /><strong className={styles.progressPercent}>{status === 'completed' ? 100 : status === 'skipping' ? 0 : progress}%</strong></div>
+        {status === 'skipping' && <p className={styles.progressStateMessage}>Progress is paused while you skip this book.</p>}
+        {status === 'completed' && <p className={styles.progressStateMessage}>You finished this book.</p>}
+        {saved && !dirty ? <div className={styles.saveRow}><p className={styles.savedMessage}>Saved</p></div> : dirty ? <div className={styles.saveRow}><p className={styles.muted}>{saveError || 'You have unsaved changes.'}</p><button type="button" className="primary-button" disabled={saving} onClick={saveProgress}>{saving ? 'Saving...' : 'Save progress'}</button></div> : null}
         </>}
       </section>
 
