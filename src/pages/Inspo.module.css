@@ -143,3 +143,39 @@
 @media (max-width: 800px) { .page h1 { font-size: 48px; } .mapView { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .tagEditor, .inlineTagEditor { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .upcomingMeeting { grid-template-columns: 1fr; } .calendarCard { border-top: 1px solid var(--border); border-left: 0; } .sectionHeading { align-items: flex-start; flex-direction: column; } .headingActions { width: 100%; justify-content: space-between; } .venueForm { grid-template-columns: 1fr; } .addressSearch, .selectedAddress { grid-column: auto; } .venueForm > button { grid-column: auto; } .cardTop { flex-direction: column; } .mapCanvas { min-height: 310px; } }
+
+/* Editorial meetup layout */
+.page { width: 100vw; margin-left: calc((100% - 100vw) / 2); padding: 0 0 80px; background: var(--cream); }
+.pageHero { position: relative; min-height: 305px; padding: 105px max(6vw, calc((100vw - 1080px) / 2)) 85px; color: #fff; background: linear-gradient(90deg, rgb(23 18 14 / .88), rgb(23 18 14 / .35) 60%, rgb(23 18 14 / .14)), url('../assets/nyc-hero.png') center 43% / cover; }
+.pageHero::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 92px; content: ''; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--cream)); }
+.pageHero > div { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; }
+.pageHero h1 { margin: 0; color: #fff; font-family: var(--serif); font-size: clamp(3.2rem, 6vw, 4.5rem); font-weight: 400; letter-spacing: -.06em; line-height: .98; }
+.pageHero h1 em { color: #d6aaa7; font-style: italic; }
+.pageHero p:last-child { margin: 13px 0 0; color: rgb(255 255 255 / .9); font-family: var(--serif); font-size: 17px; }
+.heroKicker { margin: 0 0 14px; color: rgb(255 255 255 / .8); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.3px; }
+.meetupShell { position: relative; z-index: 2; width: min(1080px, calc(100% - 48px)); margin: -47px auto 0; padding: 0 0 34px; }
+.meetupTopGrid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.25fr); gap: 14px; }
+.meetupTopGrid .upcomingMeeting, .votePanel { min-height: 260px; margin: 0; border: 1px solid #eadfd8; border-radius: 17px; background: rgb(255 250 246 / .96); box-shadow: 0 20px 50px rgb(38 26 20 / .1); }
+.meetupTopGrid .upcomingMeeting { grid-template-columns: 1fr 126px; gap: 12px; padding: 25px 22px; }
+.upcomingDetails .heroKicker { color: var(--muted); }
+.upcomingDetails h2 { font-size: 26px; }
+.votePanel { padding: 22px 20px 18px; }
+.votePanelHeading { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
+.votePanelHeading h2 { margin: 0 0 5px; font-family: var(--serif); font-size: 28px; font-weight: 400; }
+.votePanelHeading p, .votePanelHeading small { margin: 0; color: var(--muted); font-size: 11px; }
+.votePanelHeading small { white-space: nowrap; }
+.voteChoices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 17px; }
+.voteChoice { position: relative; min-width: 0; padding: 15px 11px 10px; border: 1px solid #eadfd8; border-radius: 13px; background: #fffaf7; }
+.voteRank { position: absolute; top: -9px; left: 10px; display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #ead5c8; color: #6f3732; font-family: var(--serif); font-size: 14px; }
+.voteChoice .category { margin: 0 0 8px; padding: 4px 6px; font-size: 8px; }
+.voteChoice h3 { overflow: hidden; margin: 0 0 3px; font-family: var(--serif); font-size: 16px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.voteChoice p { overflow: hidden; min-height: 27px; margin: 0; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.voteChoice > strong { display: block; margin: 8px 0; color: #5e514a; font-size: 10px; font-weight: 500; }
+.voteChoice > button { width: 100%; border: 1px solid #d6a6a2; border-radius: 999px; padding: 7px; background: transparent; color: #7a2929; font-size: 10px; cursor: pointer; }
+.voteChoice > button:hover, .voteChoice > button.choiceVoted { background: #f6e2df; }
+.voteEmpty { margin: 30px 0 0; color: var(--muted); font-size: 12px; }
+.meetupShell .venueSection { margin-top: 20px; padding: 22px; border: 1px solid #eadfd8; border-radius: 17px; background: rgb(255 250 246 / .9); box-shadow: 0 15px 40px rgb(38 26 20 / .07); }
+.meetupShell .sectionHeading h2 { font-size: 28px; }
+.meetupShell .addPanel { margin-bottom: 18px; }
+@media (max-width: 800px) { .meetupTopGrid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .pageHero { min-height: 300px; padding: 110px 22px 85px; } .meetupShell { width: calc(100% - 28px); margin-top: -24px; } .meetupTopGrid .upcomingMeeting { grid-template-columns: 1fr; } .voteChoices { grid-template-columns: 1fr; } .voteChoice p { min-height: 0; } }
