@@ -143,6 +143,7 @@ function Backlog() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [selectedGenre, setSelectedGenre] = useState('all')
+  const [selectedOrder, setSelectedOrder] = useState('default')
   const [interactions, setInteractions] = useState<Record<string, BookInteraction>>({})
 
   const genreOptions = Array.from(
@@ -151,6 +152,14 @@ function Backlog() {
   const filteredBooks = selectedGenre === 'all'
     ? books
     : books.filter((book) => book.genre?.trim() === selectedGenre)
+  const orderedBooks = [...filteredBooks].sort((a, b) => {
+    const first = interactions[a.id]
+    const second = interactions[b.id]
+    if (selectedOrder === 'upvotes') return (second?.upvotes ?? 0) - (first?.upvotes ?? 0) || a.title.localeCompare(b.title)
+    if (selectedOrder === 'downvotes') return (second?.downvotes ?? 0) - (first?.downvotes ?? 0) || a.title.localeCompare(b.title)
+    if (selectedOrder === 'unread') return (first?.readers.length ?? 0) - (second?.readers.length ?? 0) || a.title.localeCompare(b.title)
+    return 0
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -355,20 +364,31 @@ function Backlog() {
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.listHeader}>
         <p className="eyebrow">{filteredBooks.length} OF {books.length} BOOKS ON YOUR LIST</p>
-        {genreOptions.length > 0 && (
+        <div className={styles.filters}>
+          {genreOptions.length > 0 && (
+            <label className={styles.filter}>
+              <span>Genre</span>
+              <select value={selectedGenre} onChange={(event) => setSelectedGenre(event.target.value)}>
+                <option value="all">All genres</option>
+                {genreOptions.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+              </select>
+            </label>
+          )}
           <label className={styles.filter}>
-            <span>Filter by genre</span>
-            <select value={selectedGenre} onChange={(event) => setSelectedGenre(event.target.value)}>
-              <option value="all">All genres</option>
-              {genreOptions.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+            <span>Order</span>
+            <select value={selectedOrder} onChange={(event) => setSelectedOrder(event.target.value)}>
+              <option value="default">Recently added</option>
+              <option value="upvotes">Most upvoted</option>
+              <option value="downvotes">Most downvoted</option>
+              <option value="unread">Most unread</option>
             </select>
           </label>
-        )}
+        </div>
       </div>
       {books.length === 0 ? (
         <p className={styles.empty}>Your reading list is empty. Search above to find your next read.</p>
       ) : filteredBooks.length > 0 ? (
-        <div className={styles.grid}>{filteredBooks.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} interaction={user ? interactions[book.id] : undefined} onVote={(vote) => voteOnBook(book.id, vote)} onToggleRead={() => toggleRead(book.id)} onAddComment={(content) => addComment(book.id, content)} onDeleteComment={(commentId) => deleteComment(book.id, commentId)} />)}</div>
+        <div className={styles.grid}>{orderedBooks.map((book) => <BookCard key={book.id} title={book.title} author={book.author} genre={book.genre} cover={book.cover_url} description={book.description} addedBy={book.addedBy} onRemove={() => removeBook(book)} interaction={user ? interactions[book.id] : undefined} onVote={(vote) => voteOnBook(book.id, vote)} onToggleRead={() => toggleRead(book.id)} onAddComment={(content) => addComment(book.id, content)} onDeleteComment={(commentId) => deleteComment(book.id, commentId)} />)}</div>
       ) : (
         <p className={styles.empty}>No books in this genre yet. Try another filter.</p>
       )}

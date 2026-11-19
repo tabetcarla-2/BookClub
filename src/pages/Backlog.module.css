@@ -95,6 +95,12 @@
   margin-top: 30px;
 }
 
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .listHeader > p {
   margin: 0;
 }
@@ -162,6 +168,12 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
   }
 
   .filter {
