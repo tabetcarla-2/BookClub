@@ -39,10 +39,66 @@
 .reviewSection > div:first-child { flex: 1; min-width: 190px; }
 .reviewForm { flex-basis: 100%; padding-top: 22px; border-top: 1px solid var(--border); }
 .starRow { display: flex; align-items: center; gap: 12px; color: var(--burgundy); }
-.starRow span { font-size: 26px; letter-spacing: 3px; }
 .starRow strong { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 400; }
 .reviewForm textarea { width: 100%; resize: vertical; padding: 14px; margin: 4px 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--cream); color: var(--ink); font: inherit; font-size: 13px; outline: none; }
 .reviewForm textarea:focus { border-color: var(--burgundy); }
 .reviewForm .primary-button { display: block; margin-left: auto; }
 .reviewSection .primary-button:disabled { cursor: not-allowed; opacity: .45; }
+.completedSummary { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 24px; }
+.completedSummary strong { color: #23804a; font-size: 16px; }
+.completedSummary p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.editProgress { border: 1px solid var(--border); border-radius: 999px; padding: 9px 13px; background: var(--paper); color: var(--muted); font-size: 11px; cursor: pointer; }
+.editProgress:hover { border-color: var(--burgundy); color: var(--burgundy); }
+.celebrationBackdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: #17171966; backdrop-filter: blur(6px); }
+.celebration { position: relative; width: min(100%, 390px); padding: 38px 30px 30px; background: var(--paper); border: 1px solid var(--border); border-radius: 26px; box-shadow: 0 24px 70px #1d1d1f30; text-align: center; }
+.celebration h2 { margin: 7px 0 8px; font-family: var(--serif); font-size: 34px; font-weight: 400; }
+.celebration p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: 13px; }
+.confetti { display: block; color: var(--burgundy); font-size: 30px; line-height: 1; }
+.celebrationActions { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 25px; }
+.dismissButton { border: 0; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.dismissButton:hover { color: var(--ink); }
+.communityReviews { padding: 30px; margin-top: 22px; background: var(--paper); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 28px #1d1d1f08; }
+.reviewsCard { display: block; }
+.communityReviews h2 { margin: 0 0 20px; font-size: 28px; }
+.currentReviewList { display: grid; gap: 10px; }
+.currentReview { padding: 14px 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--cream); }
+.myReview { position: relative; border-color: #d8b2bd; background: #fff9fa; }
+.currentReviewTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.currentReviewTop > span { display: flex; align-items: center; gap: 4px; color: var(--burgundy); white-space: nowrap; }
+.currentReviewTop small { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0; }
+.currentReview p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.starRating { display: inline-flex; gap: 1px; vertical-align: middle; }
+.starCell { position: relative; display: inline-block; width: 20px; height: 25px; color: #d6d0d2; font-size: 23px; line-height: 25px; }
+.starFill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: var(--burgundy); white-space: nowrap; }
+.starOutline { position: absolute; inset: 0; color: #d6d0d2; }
+.starHitAreas { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); z-index: 1; }
+.starHitAreas button { width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.starHitAreas button:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 1px; border-radius: 4px; }
+.myReview .currentReviewTop { padding-right: 42px; }
+.editReview { position: absolute; top: 10px; right: 12px; border: 0; padding: 2px 0; background: transparent; color: var(--burgundy); font-size: 10px; cursor: pointer; }
+.editReview:hover { text-decoration: underline; }
+.clubProgressSection { padding: 30px; margin-top: 22px; background: var(--paper); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 28px #1d1d1f08; }
+.clubProgressSection h2 { margin: 0 0 22px; font-size: 28px; }
+.memberProgressList { display: grid; gap: 15px; }
+.memberProgressLabel { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 7px; color: var(--ink); font-size: 12px; }
+.memberProgressLabel strong { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 400; text-transform: uppercase; }
+.memberTrack { height: 7px; overflow: hidden; border-radius: 99px; background: #eeeeF0; }
+.memberTrack span { display: block; height: 100%; border-radius: inherit; background: var(--burgundy); transition: width 500ms ease; }
+.memberTrack .memberComplete { background: #36a866; }
+.memberTrack .memberSkipping { background: #bfc0c4; }
+.previousReadsSection { padding: 30px; margin-top: 22px; background: var(--paper); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 28px #1d1d1f08; }
+.previousReadsSection h2 { margin: 0 0 22px; font-size: 28px; }
+.previousReadsList { display: grid; gap: 15px; }
+.previousRead { display: flex; gap: 16px; padding: 15px; border: 1px solid var(--border); border-radius: 18px; background: var(--cream); }
+.previousRead > img, .previousCover { width: 55px; height: 78px; flex-shrink: 0; border-radius: 7px; object-fit: cover; }
+.previousCover { display: grid; place-items: center; background: var(--rose); color: var(--burgundy); font-family: var(--serif); font-size: 26px; }
+.previousInfo { min-width: 0; }
+.previousInfo h3 { margin: 0 0 3px; font-family: var(--serif); font-size: 20px; }
+.previousInfo p { margin: 5px 0 0; }
+.readBy { color: var(--muted); font-size: 11px; }
+.readBy strong { color: var(--ink); }
+.previousInfo blockquote { margin: 10px 0 0; padding-left: 9px; border-left: 2px solid var(--rose); color: var(--muted); font-size: 11px; line-height: 1.5; }
+.previousInfo blockquote strong, .archiveComment strong { color: var(--ink); }
+.archiveComment { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.archiveEmpty { margin: 0; padding: 18px; border: 1px dashed var(--border); border-radius: 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 @media (max-width: 650px) { .page > h1 { font-size: 48px; } .book { flex-direction: column; align-items: flex-start; padding: 25px; } .cover { width: 170px; height: 245px; } .sectionHeading, .reviewSection { flex-direction: column; } }

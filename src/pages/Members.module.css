@@ -1,16 +1,165 @@
-.page { padding: 55px 0 80px; max-width: 900px; margin: 0 auto; }
-.page h1 { font-size: 60px; margin-bottom: 12px; }
-.page h1 em { color: var(--burgundy); font-style: normal; }
-.description { color: var(--muted); font-size: 14px; line-height: 1.7; }
-.description strong { color: var(--ink); font-weight: 600; }
-.list { display: grid; gap: 12px; margin-top: 40px; }
-.member { display: grid; grid-template-columns: auto minmax(130px, .65fr) minmax(220px, 1fr); align-items: center; gap: 18px; padding: 20px 22px; background: var(--paper); border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 8px 24px #1d1d1f08; }
-.avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--rose); color: var(--burgundy); font-weight: 700; }
-.identity h2 { margin: 0 0 3px; font-size: 18px; }
-.identity p { margin: 0; color: var(--muted); font-size: 11px; }
-.progressLabel { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; }
-.progressLabel strong { color: var(--ink); font-weight: 500; }
-.track { height: 8px; overflow: hidden; border-radius: 99px; background: #eeeeF0; }
-.track span { display: block; height: 100%; border-radius: inherit; background: var(--burgundy); transition: width 500ms ease; }
-.empty { padding: 40px; text-align: center; color: var(--muted); background: var(--paper); border: 1px solid var(--border); border-radius: 22px; }
-@media (max-width: 650px) { .page h1 { font-size: 48px; } .member { grid-template-columns: auto 1fr; } .progressArea { grid-column: 1 / -1; } }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 55px 0 80px;
+}
+
+.page h1 {
+  margin-bottom: 12px;
+  font-size: 60px;
+}
+
+.page h1 em {
+  color: var(--burgundy);
+  font-style: normal;
+}
+
+.description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.member {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 20px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 8px 24px #1d1d1f08;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--rose);
+  color: var(--burgundy);
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.identity h2 {
+  margin: 2px 0 3px;
+  font-size: 18px;
+}
+
+.identity p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.badges {
+  grid-column: 1 / -1;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.badgeHeading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .4px;
+}
+
+.badgeHeading strong {
+  color: var(--burgundy);
+  font-weight: 500;
+}
+
+.badgeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 5px 8px 5px 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--cream);
+}
+
+.badge img,
+.badgePlaceholder {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 34px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--rose);
+  color: var(--burgundy);
+  font-size: 12px;
+  object-fit: cover;
+}
+
+.badge > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.badge strong,
+.badge small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge strong {
+  max-width: 150px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.badge small {
+  max-width: 150px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.noBadges,
+.empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.noBadges {
+  margin: 0;
+}
+
+.empty {
+  margin-top: 40px;
+  padding: 40px;
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+}
+
+@media (max-width: 700px) {
+  .page h1 { font-size: 48px; }
+  .grid { grid-template-columns: 1fr; }
+}

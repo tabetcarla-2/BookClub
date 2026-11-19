@@ -1,84 +1,116 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
 import styles from './Members.module.css'
+
+type Badge = {
+  id: string
+  title: string
+  author: string
+  coverUrl?: string | null
+}
 
 type Member = {
   id: string
   name: string
   username: string
-  progress: number
-  status: 'reading' | 'paused' | 'skipping' | 'completed' | 'not_started'
+  avatarUrl?: string | null
+  badges: Badge[]
 }
-
-const demoMembers: Member[] = [
-  { id: 'carla', name: 'Carla', username: '@carla', progress: 45, status: 'reading' },
-  { id: 'jane', name: 'Jane', username: '@jane', progress: 72, status: 'reading' },
-  { id: 'maya', name: 'Maya', username: '@maya', progress: 0, status: 'skipping' },
-  { id: 'sophie', name: 'Sophie', username: '@sophie', progress: 100, status: 'completed' },
-]
 
 function Members() {
   const { user } = useAuth()
-  const [members, setMembers] = useState<Member[]>(demoMembers)
-  const [bookTitle, setBookTitle] = useState("A Husband's Secret")
+  const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadMembers() {
       if (!supabase || !user) {
         setLoading(false)
         return
       }
 
-      const { data: currentBook } = await supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle()
-      if (!currentBook) {
+      const [{ data: profiles, error: profilesError }, { data: completedProgress, error: progressError }] = await Promise.all([
+        supabase.from('profiles').select('id, username, full_name, avatar_url').order('full_name'),
+        supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed'),
+      ])
+
+      if (cancelled) return
+      if (profilesError || progressError) {
+        setError(profilesError?.message ?? progressError?.message ?? 'Could not load members.')
         setLoading(false)
         return
       }
 
-      const [{ data: profiles }, { data: progress }, { data: book }] = await Promise.all([
-        supabase.from('profiles').select('id, username, full_name'),
-        supabase.from('reading_progress').select('user_id, progress, status').eq('book_id', currentBook.book_id),
-        supabase.from('books').select('title').eq('id', currentBook.book_id).maybeSingle(),
-      ])
+      const bookIds = Array.from(new Set((completedProgress ?? []).map((progress) => progress.book_id)))
+      const { data: books, error: booksError } = bookIds.length > 0
+        ? await supabase.from('books').select('id, title, author, cover_url').in('id', bookIds)
+        : { data: [], error: null }
 
-      if (book) setBookTitle(book.title)
-      const progressByUser = new Map((progress ?? []).map((item) => [item.user_id, item]))
-      setMembers((profiles ?? []).map((profile) => {
-        const saved = progressByUser.get(profile.id)
-        return {
-          id: profile.id,
-          name: profile.full_name || profile.username,
-          username: `@${profile.username}`,
-          progress: saved?.progress ?? 0,
-          status: saved?.status === 'want_to_read' ? 'not_started' : saved?.status ?? 'not_started',
-        }
-      }))
+      if (cancelled) return
+      if (booksError) {
+        setError(booksError.message)
+        setLoading(false)
+        return
+      }
+
+      const booksById = new Map((books ?? []).map((book) => [book.id, book]))
+      const badgesByUser = new Map<string, Badge[]>()
+      for (const progress of completedProgress ?? []) {
+        const book = booksById.get(progress.book_id)
+        if (!book) continue
+        const badges = badgesByUser.get(progress.user_id) ?? []
+        badges.push({ id: book.id, title: book.title, author: book.author, coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) })
+        badgesByUser.set(progress.user_id, badges)
+      }
+
+      setMembers((profiles ?? []).map((profile) => ({
+        id: profile.id,
+        name: profile.full_name || profile.username,
+        username: `@${profile.username}`,
+        avatarUrl: profile.avatar_url,
+        badges: badgesByUser.get(profile.id) ?? [],
+      })))
       setLoading(false)
     }
 
     loadMembers()
+    return () => { cancelled = true }
   }, [user])
 
   return (
     <section className={styles.page}>
       <p className="eyebrow">THE READING ROLL CALL</p>
       <h1>Meet the <em>members.</em></h1>
-      <p className={styles.description}>Everyone's progress on <strong>{bookTitle}</strong>, all in one place.</p>
+      <p className={styles.description}>The people behind the pages, plus the books they have finished with the club.</p>
 
-      <div className={styles.list}>
-        {loading ? <p className={styles.empty}>Loading the reading roll call...</p> : members.map((member) => (
-          <article className={styles.member} key={member.id}>
-            <div className={styles.avatar}>{member.name.slice(0, 1).toUpperCase()}</div>
-            <div className={styles.identity}><h2>{member.name}</h2><p>{member.username}</p></div>
-            <div className={styles.progressArea}>
-              <div className={styles.progressLabel}><span>{member.status.replace('_', ' ')}</span><strong>{member.progress}%</strong></div>
-              <div className={styles.track}><span style={{ width: `${member.progress}%` }} /></div>
-            </div>
-          </article>
-        ))}
-      </div>
+      {loading ? (
+        <div className={styles.empty} role="status">Loading the club members...</div>
+      ) : error ? (
+        <div className={styles.empty}>{error}</div>
+      ) : members.length === 0 ? (
+        <div className={styles.empty}>No members yet.</div>
+      ) : (
+        <div className={styles.grid}>
+          {members.map((member) => (
+            <article className={styles.member} key={member.id}>
+              {member.avatarUrl ? <img className={styles.avatar} src={member.avatarUrl} alt="" /> : <div className={styles.avatar}>{member.name.slice(0, 1).toUpperCase()}</div>}
+              <div className={styles.identity}>
+                <h2>{member.name}</h2>
+                <p>{member.username}</p>
+              </div>
+              <div className={styles.badges}>
+                <div className={styles.badgeHeading}><span>BOOK CLUB BADGES</span><strong>{member.badges.length}</strong></div>
+                {member.badges.length > 0 ? <div className={styles.badgeList}>{member.badges.map((badge) => <div className={styles.badge} key={badge.id}>{badge.coverUrl ? <img src={badge.coverUrl} alt="" /> : <span className={styles.badgePlaceholder}>✦</span>}<span><strong>{badge.title}</strong><small>{badge.author}</small></span></div>)}</div> : <p className={styles.noBadges}>No completed books yet.</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

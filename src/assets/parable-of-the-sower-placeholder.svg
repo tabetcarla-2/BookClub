@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" role="img" aria-labelledby="title">
+  <title>Parable of the Sower placeholder cover</title>
+  <rect width="240" height="320" rx="14" fill="#171719"/>
+  <circle cx="182" cy="66" r="44" fill="#d8899d" opacity=".9"/>
+  <path d="M0 252c48-34 89-31 125-6 35 25 68 28 115 3v71H0Z" fill="#f1e7e1"/>
+  <text x="24" y="73" fill="#fff" font-family="Arial, sans-serif" font-size="13" letter-spacing="2">OCTAVIA E. BUTLER</text>
+  <text x="24" y="176" fill="#fff" font-family="Georgia, serif" font-size="31">PARABLE</text>
+  <text x="24" y="210" fill="#fff" font-family="Georgia, serif" font-size="31">OF THE</text>
+  <text x="24" y="244" fill="#fff" font-family="Georgia, serif" font-size="31">SOWER</text>
+</svg>
