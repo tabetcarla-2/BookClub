@@ -99,7 +99,7 @@ function Members() {
         }
         const finishedHistoricalBooks = completedBooks.filter((bookId) => historicalClubBookIds.has(bookId)).length
         const completionRate = historicalClubBookIds.size ? Math.round((finishedHistoricalBooks / historicalClubBookIds.size) * 100) : 0
-        return { id: profile.id, name: profile.full_name || profile.username, username: `@${profile.username}`, avatarUrl: profile.avatar_url, status: currentStatus.status, statusKey: currentStatus.statusKey, progress, booksRead: completedBooks.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, completionRate, badges }
+        return { id: profile.id, name: profile.full_name || profile.username, username: profile.username, avatarUrl: profile.avatar_url, status: currentStatus.status, statusKey: currentStatus.statusKey, progress, booksRead: completedBooks.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, completionRate, badges }
       })
 
       const allBookIds = new Set(readRows.map((row) => row.book_id)); completedRows.forEach((row) => allBookIds.add(row.book_id))

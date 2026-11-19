@@ -8,7 +8,6 @@ function Login() {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,7 +33,7 @@ function Login() {
       : await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username, full_name: fullName } },
+        options: { data: { full_name: fullName } },
       })
 
     const { error, data } = result
@@ -80,15 +79,6 @@ function Login() {
                 required
               />
 
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                placeholder="yourusername"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
             </>
           )}
 
