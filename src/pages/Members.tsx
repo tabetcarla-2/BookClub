@@ -71,7 +71,7 @@ function Members() {
       setMembers((profiles ?? []).map((profile) => ({
         id: profile.id,
         name: profile.full_name || profile.username,
-        username: `@${profile.username}`,
+        username: `@${profile.id === user.id ? (user.user_metadata?.username || user.email?.split('@')[0] || profile.username) : profile.username}`,
         avatarUrl: profile.avatar_url,
         badges: badgesByUser.get(profile.id) ?? [],
       })))
