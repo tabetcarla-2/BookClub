@@ -37,6 +37,22 @@ function Profile() {
     let cancelled = false
     async function loadProfile() {
       if (!supabase || !user) { setLoading(false); return }
+      const cacheKey = `bookclub-profile-${user.id}`
+      try {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const snapshot = JSON.parse(cached) as { profile?: ProfileData; currentBook?: Book | null; currentProgress?: { progress: number; status: string } | null; badges?: Badge[]; activity?: Activity[]; stats?: typeof stats }
+          if (snapshot.profile) { setProfile(snapshot.profile); setEditName(snapshot.profile.full_name) }
+          if (snapshot.currentBook !== undefined) setCurrentBook(snapshot.currentBook)
+          if (snapshot.currentProgress !== undefined) setCurrentProgress(snapshot.currentProgress)
+          if (snapshot.badges) setBadges(snapshot.badges)
+          if (snapshot.activity) setActivity(snapshot.activity)
+          if (snapshot.stats) setStats(snapshot.stats)
+          if (snapshot.profile) setLoading(false)
+        }
+      } catch {
+        // Cache is an instant preview only; Supabase remains the source of truth.
+      }
       const [profileResult, currentResult, readsResult, completedResult, reviewsResult, visitsResult] = await Promise.all([
         supabase.from('profiles').select('full_name, username, avatar_url').eq('id', user.id).maybeSingle(),
         supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle(),
@@ -83,7 +99,10 @@ function Profile() {
       reviews.forEach((review) => { const book = booksById.get(review.book_id); if (book) nextActivity.push({ icon: '☆', text: `Rated ${book.title} ${review.rating}/5`, date: review.created_at }) })
       ;(visitsResult.data ?? []).forEach((visit) => nextActivity.push({ icon: '♧', text: 'Attended a book club meetup', date: visit.tried_at }))
       nextActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      setCurrentBook(current ?? null); setCurrentProgress(currentProgressResult.data); setBadges(bookBadges); setStats({ booksRead: readIds.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, meetups: (visitsResult.data ?? []).length }); setActivity(nextActivity.slice(0, 4)); setLoading(false)
+      const nextStats = { booksRead: readIds.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, meetups: (visitsResult.data ?? []).length }
+      const nextActivityList = nextActivity.slice(0, 4)
+      setCurrentBook(current ?? null); setCurrentProgress(currentProgressResult.data); setBadges(bookBadges); setStats(nextStats); setActivity(nextActivityList); setLoading(false)
+      try { localStorage.setItem(cacheKey, JSON.stringify({ profile: profileRow ? { ...profileRow, username: profileRow.username.startsWith('reader_') ? (user.user_metadata?.username || user.email?.split('@')[0] || profileRow.username) : profileRow.username, full_name: profileRow.full_name.toLowerCase() === 'tabet.carla' ? 'Carla' : profileRow.full_name } : profile, currentBook: current ?? null, currentProgress: currentProgressResult.data, badges: bookBadges, activity: nextActivityList, stats: nextStats })) } catch { /* Cache is optional. */ }
     }
     loadProfile()
     return () => { cancelled = true }
