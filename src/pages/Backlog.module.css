@@ -215,13 +215,26 @@
 }
 
 .pageHero {
+  position: relative;
   min-height: 285px;
-  padding: 100px max(6vw, calc((100vw - 1080px) / 2)) 80px;
+  padding: 105px max(6vw, calc((100vw - 1080px) / 2)) 85px;
   color: #fff;
   background: linear-gradient(90deg, rgb(23 18 14 / .88), rgb(23 18 14 / .38) 60%, rgb(23 18 14 / .14)), url('../assets/nyc-hero.png') center 51% / cover;
+  background-repeat: no-repeat;
 }
 
-.pageHero > div { max-width: 1080px; margin: 0 auto; }
+.pageHero::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 92px;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--cream));
+}
+
+.pageHero > div { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; }
 .heroKicker { margin: 0 0 14px; color: rgb(255 255 255 / .8); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.3px; }
 .pageHero h1 { margin: 0; color: #fff; font-family: var(--serif); font-size: clamp(3.2rem, 6vw, 4.5rem); font-weight: 400; letter-spacing: -.06em; line-height: .98; }
 .pageHero h1 em { color: #d6aaa7; }
@@ -282,7 +295,7 @@
 }
 
 @media (max-width: 450px) {
-  .pageHero { padding: 105px 22px 80px; }
+  .pageHero { padding: 110px 22px 85px; }
   .libraryShell .grid { grid-template-columns: 1fr; }
   .backlogToolbar { align-items: stretch; flex-direction: column; }
   .bookModal { grid-template-columns: 1fr; max-height: 90vh; overflow-y: auto; }
