@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-labelledby="title">
+  <title>Parable of the Sower club badge</title>
+  <defs>
+    <linearGradient id="medal" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f5d28b"/>
+      <stop offset="1" stop-color="#b87532"/>
+    </linearGradient>
+    <clipPath id="circle"><circle cx="120" cy="112" r="91"/></clipPath>
+  </defs>
+  <path d="M87 202h66l-8 59-25-18-25 18z" fill="#8d2527" stroke="#d8a64c" stroke-width="6"/>
+  <circle cx="120" cy="112" r="101" fill="url(#medal)"/>
+  <circle cx="120" cy="112" r="91" fill="#f6dfb0" stroke="#fff0c9" stroke-width="3"/>
+  <g clip-path="url(#circle)">
+    <path d="M0 181c39-41 76-42 120-17 44 24 74 22 120-6v80H0z" fill="#d79c50"/>
+    <path d="M0 204c49-39 83-36 124-11 38 23 74 21 116-2v70H0z" fill="#bc6b3f"/>
+    <path d="M20 222c43-16 81-14 116 4 34 17 65 15 99-2v50H20z" fill="#8d4c3f"/>
+    <circle cx="173" cy="62" r="19" fill="#d18b2e"/>
+    <g fill="none" stroke="#d18b2e" stroke-width="3" stroke-linecap="round">
+      <path d="M173 33v-12M173 91v12M144 62h-12M202 62h12M153 42l-9-9M193 82l9 9M193 42l9-9M153 82l-9 9"/>
+    </g>
+    <path d="M82 210c-2-46 6-78 28-96 17-14 30-12 40 4-18 2-30 15-32 35-2 18 5 39 19 57z" fill="#6e3031"/>
+    <path d="M102 201c18-26 25-49 23-69 8 4 16 13 17 28 1 20-7 38-23 54z" fill="#e0b75d"/>
+    <path d="M116 198c-4-18-1-34 8-48 7 8 9 18 6 31-2 10-7 19-14 27z" fill="#d2a23f"/>
+  </g>
+  <circle cx="120" cy="112" r="91" fill="none" stroke="#a9652b" stroke-width="4"/>
+</svg>

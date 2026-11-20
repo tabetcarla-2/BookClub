@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
+import parableBadge from '../assets/parable-of-the-sower-badge.svg'
 import coverImage from '../assets/husbands-secret-cover.png'
 import styles from './Profile.module.css'
 
 type ProfileData = { full_name: string; username: string; avatar_url: string | null }
 type Book = { id: string; title: string; author: string; cover_url: string | null }
-type Badge = { book: Book; rating: number | null; review: string | null }
+type Badge = { book: Book; badgeUrl: string | null; rating: number | null; review: string | null }
 type Activity = { icon: string; text: string; date: string }
 
 function relativeDate(value: string) {
@@ -37,7 +38,7 @@ function Profile() {
     let cancelled = false
     async function loadProfile() {
       if (!supabase || !user) { setLoading(false); return }
-      const cacheKey = `bookclub-profile-${user.id}`
+      const cacheKey = `bookclub-profile-v2-${user.id}`
       try {
         const cached = localStorage.getItem(cacheKey)
         if (cached) {
@@ -53,17 +54,17 @@ function Profile() {
       } catch {
         // Cache is an instant preview only; Supabase remains the source of truth.
       }
-      const [profileResult, currentResult, readsResult, completedResult, reviewsResult, visitsResult] = await Promise.all([
+      const [profileResult, currentResult, clubBooksResult, completedResult, reviewsResult, visitsResult] = await Promise.all([
         supabase.from('profiles').select('full_name, username, avatar_url').eq('id', user.id).maybeSingle(),
         supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle(),
-        supabase.from('book_reads').select('book_id, created_at').eq('user_id', user.id),
+        supabase.from('club_books').select('book_id, is_current'),
         supabase.from('reading_progress').select('book_id, updated_at').eq('user_id', user.id).eq('status', 'completed'),
         supabase.from('reviews').select('book_id, rating, comment, created_at').eq('user_id', user.id),
         supabase.from('venue_group_visits').select('tried_at').eq('marked_by', user.id),
       ])
       if (cancelled) return
-      if (profileResult.error || currentResult.error || readsResult.error || completedResult.error || reviewsResult.error || visitsResult.error) {
-        setError(profileResult.error?.message || currentResult.error?.message || readsResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || 'Unable to load your profile.')
+      if (profileResult.error || currentResult.error || clubBooksResult.error || completedResult.error || reviewsResult.error || visitsResult.error) {
+        setError(profileResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || 'Unable to load your profile.')
         setLoading(false)
         return
       }
@@ -80,7 +81,8 @@ function Profile() {
 
       const currentBookId = currentResult.data?.book_id ?? null
       const completedRows = completedResult.data ?? []
-      const readIds = Array.from(new Set([...(readsResult.data ?? []).map((item) => item.book_id), ...completedRows.map((item) => item.book_id)]))
+      const clubBookIds = new Set((clubBooksResult.data ?? []).map((item) => item.book_id))
+      const readIds = Array.from(new Set(completedRows.filter((item) => clubBookIds.has(item.book_id)).map((item) => item.book_id)))
       const allBookIds = Array.from(new Set([...readIds, ...(currentBookId ? [currentBookId] : [])]))
       const [booksResult, currentProgressResult] = await Promise.all([
         allBookIds.length ? supabase.from('books').select('id, title, author, cover_url').in('id', allBookIds) : Promise.resolve({ data: [], error: null }),
@@ -91,12 +93,13 @@ function Profile() {
       const booksById = new Map((booksResult.data ?? []).map((book) => [book.id, book]))
       const reviews = reviewsResult.data ?? []
       const reviewsByBook = new Map(reviews.map((review) => [review.book_id, review]))
-      const bookBadges = readIds.map((bookId) => { const book = booksById.get(bookId); if (!book) return null; const review = reviewsByBook.get(bookId); return { book: { ...book, cover_url: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) }, rating: review?.rating ?? null, review: review?.comment ?? null } }).filter((badge): badge is Badge => Boolean(badge))
+      const bookBadges = readIds.map((bookId) => { const book = booksById.get(bookId); if (!book) return null; const review = reviewsByBook.get(bookId); return { book: { ...book, cover_url: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) }, badgeUrl: book.title.toLowerCase() === 'parable of the sower' ? parableBadge : null, rating: review?.rating ?? null, review: review?.comment ?? null } }).filter((badge): badge is Badge => Boolean(badge))
       const current = currentBookId ? booksById.get(currentBookId) : null
-      const ratings = reviews.map((review) => Number(review.rating))
+      const clubReviews = reviews.filter((review) => clubBookIds.has(review.book_id))
+      const ratings = clubReviews.map((review) => Number(review.rating))
       const nextActivity: Activity[] = []
       if (current && currentProgressResult.data) nextActivity.push({ icon: '▤', text: `Marked ${current.title} as ${currentProgressResult.data.status === 'completed' ? 'completed' : 'reading'}`, date: new Date().toISOString() })
-      reviews.forEach((review) => { const book = booksById.get(review.book_id); if (book) nextActivity.push({ icon: '☆', text: `Rated ${book.title} ${review.rating}/5`, date: review.created_at }) })
+      clubReviews.forEach((review) => { const book = booksById.get(review.book_id); if (book) nextActivity.push({ icon: '☆', text: `Rated ${book.title} ${review.rating}/5`, date: review.created_at }) })
       ;(visitsResult.data ?? []).forEach((visit) => nextActivity.push({ icon: '♧', text: 'Attended a book club meetup', date: visit.tried_at }))
       nextActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       const nextStats = { booksRead: readIds.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, meetups: (visitsResult.data ?? []).length }
@@ -148,7 +151,7 @@ function Profile() {
       <div className={styles.profileGrid}>
         <section className={styles.currentSection}><div className={styles.cardEyebrow}>CURRENT BOOK</div>{loading ? <p className={styles.muted}>Loading your current book…</p> : currentBook ? <div className={styles.currentBook}>{currentBookCover ? <img src={currentBookCover} alt={`Cover of ${currentBook.title}`} /> : <div className={styles.coverFallback}>{currentBook.title.slice(0, 1)}</div>}<div className={styles.currentBookInfo}><span className={`${styles.status} ${styles[currentStatus.toLowerCase().replace(' ', '')]}`}>{currentStatus}</span><h2>{currentBook.title}</h2><p>{currentBook.author}</p><div className={styles.progress}><span style={{ width: `${currentProgress?.progress ?? 0}%` }} /><small>{currentProgress?.progress ?? 0}% complete</small></div></div></div> : <p className={styles.muted}>There is no current book yet.</p>}</section>
         <section className={styles.glanceCard}><h2>Your Club <em>at a Glance.</em></h2><div className={styles.glanceStats}><div><span>▤</span><strong>{stats.booksRead}</strong><small>Books read</small></div><div><span>☆</span><strong>{averageRating}</strong><small>Avg. rating</small></div><div><span>♧</span><strong>{stats.meetups}</strong><small>Meetups attended</small></div></div></section>
-        <section className={styles.badgesSection}><div className={styles.cardHeading}><div><h2>Your <em>Badges.</em></h2><p>Books you’ve read with the club.</p></div><span>{badges.length} badges</span></div>{loading ? <p className={styles.muted}>Loading your badges…</p> : visibleBadges.length ? <div className={styles.badges}>{visibleBadges.map(({ book, rating }) => <article className={styles.badge} key={book.id} title={`${book.title}${rating !== null ? ` · ${rating}/5` : ''}`}>{book.cover_url ? <img src={book.cover_url} alt={book.title} /> : <div className={styles.coverFallback}>{book.title.slice(0, 1)}</div>}</article>)}{badges.length > visibleBadges.length && <div className={styles.moreBadge}>+{badges.length - visibleBadges.length}</div>}</div> : <p className={styles.empty}>Your book-club badges will appear here when you finish a book.</p>}</section>
+        <section className={styles.badgesSection}><div className={styles.cardHeading}><div><h2>Your <em>Badges.</em></h2><p>Books you’ve read with the club.</p></div><span>{badges.length} badges</span></div>{loading ? <p className={styles.muted}>Loading your badges…</p> : visibleBadges.length ? <div className={styles.badges}>{visibleBadges.map(({ book, badgeUrl, rating }) => <article className={styles.badge} key={book.id} title={`${book.title}${rating !== null ? ` · ${rating}/5` : ''}`}>{badgeUrl ? <img src={badgeUrl} alt={`${book.title} badge`} /> : <div className={styles.badgeFallback}>✦</div>}</article>)}{badges.length > visibleBadges.length && <div className={styles.moreBadge}>+{badges.length - visibleBadges.length}</div>}</div> : <p className={styles.empty}>Your book-club badges will appear here when you finish a book.</p>}</section>
         <section className={styles.activityCard}><h2>Recent <em>Activity.</em></h2>{activity.length ? <div className={styles.activityList}>{activity.map((item, index) => <div className={styles.activity} key={`${item.text}-${index}`}><span>{item.icon}</span><p>{item.text}</p><small>{relativeDate(item.date)}</small></div>)}</div> : <p className={styles.empty}>Your club activity will appear here.</p>}</section>
       </div>
     </div>

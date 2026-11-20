@@ -256,18 +256,15 @@ function Backlog() {
     let cancelled = false
     async function loadArchive() {
       if (!supabase || !user) { setArchiveLoading(false); return }
-      const [{ data: completed }, { data: clubBooks }, { data: reads }, { data: profiles }] = await Promise.all([
+      const [{ data: completed }, { data: clubBooks }, { data: profiles }] = await Promise.all([
         supabase.from('reading_progress').select('user_id, book_id').eq('status', 'completed'),
         supabase.from('club_books').select('book_id, is_current'),
-        supabase.from('book_reads').select('book_id, user_id'),
         supabase.from('profiles').select('id, full_name, username'),
       ])
       const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name || profile.username || 'a member']))
       const currentBookIds = new Set((clubBooks ?? []).filter((item) => item.is_current).map((item) => item.book_id))
       const archiveIds = new Set([
-        ...(completed ?? []).map((item) => item.book_id),
         ...(clubBooks ?? []).filter((item) => !item.is_current).map((item) => item.book_id),
-        ...(reads ?? []).map((item) => item.book_id),
       ].filter((bookId) => !currentBookIds.has(bookId)))
       if (archiveIds.size === 0) { if (!cancelled) { setArchiveBooks([]); setArchiveLoading(false) }; return }
       const ids = Array.from(archiveIds)
@@ -277,7 +274,7 @@ function Backlog() {
         supabase.from('book_comments').select('id, book_id, user_id, content').in('book_id', ids).order('created_at', { ascending: true }),
       ])
       const readers = new Map<string, string[]>()
-      for (const item of [...(completed ?? []), ...(reads ?? [])]) {
+      for (const item of (completed ?? []).filter((progress) => archiveIds.has(progress.book_id))) {
         const list = readers.get(item.book_id) ?? []
         const name = names.get(item.user_id) ?? 'a member'
         if (!list.includes(name)) list.push(name)

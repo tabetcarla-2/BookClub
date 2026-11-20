@@ -62,5 +62,6 @@
 .modeToggle { display: block; margin: 20px auto 0; padding: 0; border: 0; background: transparent; color: var(--burgundy); font-size: 11px; cursor: pointer; }
 .modeToggle:hover { text-decoration: underline; }
 .error { margin: 14px 0 0; color: #a33d43; font-size: 11px; line-height: 1.4; }
+.message { margin: 14px 0 0; color: #52623c; font-size: 11px; line-height: 1.4; }
 .note { margin: 23px 0 0; text-align: center; }
 @media (max-width: 520px) { .page { padding: 24px 14px; } .card { padding: 34px 25px 28px; } }

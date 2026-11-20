@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
+import parableBadge from '../assets/parable-of-the-sower-badge.svg'
 import styles from './Members.module.css'
 
 type StatusKey = 'completed' | 'reading' | 'notStarted' | 'skipping'
-type Badge = { id: string; title: string; author: string; coverUrl?: string | null; rating: number | null }
+type Badge = { id: string; title: string; author: string; coverUrl?: string | null; badgeUrl?: string | null; rating: number | null }
 type Member = { id: string; name: string; username: string; avatarUrl?: string | null; status: string; statusKey: StatusKey; progress: number; booksRead: number; averageRating: number | null; completionRate: number; badges: Badge[] }
 type Leader = Pick<Member, 'id' | 'name' | 'avatarUrl' | 'booksRead'>
 type ClubStats = { memberCount: number; booksRead: number; averageRating: number | null }
@@ -35,7 +36,7 @@ function Members() {
     let cancelled = false
     async function loadMembers() {
       if (!supabase || !user) { setLoading(false); return }
-      const cacheKey = `bookclub-members-dashboard-${user.id}`
+      const cacheKey = `bookclub-members-dashboard-v2-${user.id}`
       try {
         const cached = localStorage.getItem(cacheKey)
         if (cached) {
@@ -48,17 +49,16 @@ function Members() {
         }
       } catch { /* Cache is only an instant preview. */ }
 
-      const [profilesResult, currentResult, clubBooksResult, progressResult, readsResult, reviewsResult] = await Promise.all([
+      const [profilesResult, currentResult, clubBooksResult, progressResult, reviewsResult] = await Promise.all([
         supabase.from('profiles').select('id, username, full_name, avatar_url').order('full_name'),
         supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle(),
         supabase.from('club_books').select('book_id, is_current'),
         supabase.from('reading_progress').select('user_id, book_id, progress, status'),
-        supabase.from('book_reads').select('user_id, book_id'),
         supabase.from('reviews').select('user_id, book_id, rating'),
       ])
       if (cancelled) return
-      if (profilesResult.error || currentResult.error || clubBooksResult.error || progressResult.error || readsResult.error || reviewsResult.error) {
-        setError(profilesResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || progressResult.error?.message || readsResult.error?.message || reviewsResult.error?.message || 'Unable to load the members.')
+      if (profilesResult.error || currentResult.error || clubBooksResult.error || progressResult.error || reviewsResult.error) {
+        setError(profilesResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || progressResult.error?.message || reviewsResult.error?.message || 'Unable to load the members.')
         setLoading(false)
         return
       }
@@ -67,18 +67,18 @@ function Members() {
       const currentBookId = currentResult.data?.book_id ?? null
       const historicalClubBookIds = new Set((clubBooksResult.data ?? []).filter((row) => !row.is_current).map((row) => row.book_id))
       const progressRows = progressResult.data ?? []
-      const readRows = readsResult.data ?? []
       const reviewRows = reviewsResult.data ?? []
       const completedRows = progressRows.filter((row) => row.status === 'completed' || row.progress === 100)
-      const bookIds = Array.from(new Set([...readRows.map((row) => row.book_id), ...completedRows.map((row) => row.book_id), ...(currentBookId ? [currentBookId] : [])]))
+      const clubBookIds = new Set((clubBooksResult.data ?? []).map((row) => row.book_id))
+      const clubCompletedRows = completedRows.filter((row) => clubBookIds.has(row.book_id))
+      const bookIds = Array.from(new Set([...clubCompletedRows.map((row) => row.book_id), ...(currentBookId ? [currentBookId] : [])]))
       const booksResult = bookIds.length ? await supabase.from('books').select('id, title, author, cover_url').in('id', bookIds) : { data: [], error: null }
       if (cancelled) return
       if (booksResult.error) { setError(booksResult.error.message); setLoading(false); return }
 
       const booksById = new Map((booksResult.data ?? []).map((book) => [book.id, book]))
       const readsByUser = new Map<string, Set<string>>()
-      for (const row of readRows) { const reads = readsByUser.get(row.user_id) ?? new Set<string>(); reads.add(row.book_id); readsByUser.set(row.user_id, reads) }
-      for (const row of completedRows) { const reads = readsByUser.get(row.user_id) ?? new Set<string>(); reads.add(row.book_id); readsByUser.set(row.user_id, reads) }
+      for (const row of clubCompletedRows) { const reads = readsByUser.get(row.user_id) ?? new Set<string>(); reads.add(row.book_id); readsByUser.set(row.user_id, reads) }
       const reviewsByUser = new Map<string, number[]>()
       const reviewsByBook = new Map<string, number>()
       for (const row of reviewRows) { const ratings = reviewsByUser.get(row.user_id) ?? []; ratings.push(row.rating); reviewsByUser.set(row.user_id, ratings) }
@@ -95,14 +95,14 @@ function Members() {
         for (const bookId of completedBooks) {
           const book = booksById.get(bookId)
           if (!book) continue
-          badges.push({ id: book.id, title: book.title, author: book.author, rating: reviewsByBook.get(`${profile.id}:${bookId}`) ?? null, coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) })
+          badges.push({ id: book.id, title: book.title, author: book.author, rating: reviewsByBook.get(`${profile.id}:${bookId}`) ?? null, coverUrl: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null), badgeUrl: book.title.toLowerCase() === 'parable of the sower' ? parableBadge : null })
         }
         const finishedHistoricalBooks = completedBooks.filter((bookId) => historicalClubBookIds.has(bookId)).length
         const completionRate = historicalClubBookIds.size ? Math.round((finishedHistoricalBooks / historicalClubBookIds.size) * 100) : 0
         return { id: profile.id, name: profile.full_name || profile.username, username: profile.username, avatarUrl: profile.avatar_url, status: currentStatus.status, statusKey: currentStatus.statusKey, progress, booksRead: completedBooks.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, completionRate, badges }
       })
 
-      const allBookIds = new Set(readRows.map((row) => row.book_id)); completedRows.forEach((row) => allBookIds.add(row.book_id))
+      const allBookIds = new Set(clubCompletedRows.map((row) => row.book_id))
       const allRatings = reviewRows.map((row) => row.rating)
       const stats: ClubStats = { memberCount: nextMembers.length, booksRead: allBookIds.size, averageRating: allRatings.length ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length : null }
       const leaders = [...nextMembers].sort((a, b) => b.booksRead - a.booksRead || a.name.localeCompare(b.name)).slice(0, 5)
@@ -141,7 +141,7 @@ function Members() {
       <div className={styles.profileHeader}>{selectedMember.avatarUrl ? <img className={styles.profileAvatar} src={selectedMember.avatarUrl} alt="" /> : <div className={styles.profileAvatar}>{selectedMember.name.slice(0, 1).toUpperCase()}</div>}<div><h2 id="member-profile-title">{selectedMember.name}</h2><p>{selectedMember.username}</p></div></div>
       <h3>Reading snapshot.</h3><div className={styles.snapshot}><div><strong>{selectedMember.booksRead}</strong><small>club reads</small></div><div><strong>{formatRating(selectedMember.averageRating)}</strong><small>avg rating</small></div><div><strong>{selectedMember.completionRate}%</strong><small>completion rate</small></div></div>
       <div className={styles.profileSectionHeading}><h3>Badges <span>({selectedMember.badges.length})</span></h3></div>
-      {selectedMember.badges.length ? <div className={styles.badgeShelf}>{selectedMember.badges.map((badge) => <div className={styles.bookBadge} key={badge.id} title={`${badge.title} — ${badge.author}`}>{badge.coverUrl ? <img src={badge.coverUrl} alt={badge.title} /> : <span>✦</span>}</div>)}</div> : <p className={styles.profileEmpty}>No club reads yet.</p>}
+      {selectedMember.badges.length ? <div className={styles.badgeShelf}>{selectedMember.badges.map((badge) => <div className={styles.bookBadge} key={badge.id} title={`${badge.title} — ${badge.author}`}>{badge.badgeUrl ? <img src={badge.badgeUrl} alt={`${badge.title} badge`} /> : <span>✦</span>}</div>)}</div> : <p className={styles.profileEmpty}>No club reads yet.</p>}
       <div className={styles.profileSectionHeading}><h3>Recent club reads.</h3></div>
       {selectedMember.badges.slice(0, 4).map((badge) => <div className={styles.recentRead} key={`recent-${badge.id}`}>{badge.coverUrl ? <img src={badge.coverUrl} alt="" /> : <div className={styles.recentPlaceholder}>✦</div>}<div><strong>{badge.title}</strong><span className={`${styles.status} ${styles.completed}`}>✓ Completed</span>{badge.rating !== null && <span className={styles.recentRating}>★ {formatRating(badge.rating)}</span>}</div></div>)}
       {selectedMember.badges.length === 0 && <p className={styles.profileEmpty}>Their completed books will appear here.</p>}

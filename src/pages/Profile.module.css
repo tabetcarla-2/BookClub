@@ -47,7 +47,8 @@
 .cardHeading > span { color: var(--muted); font-family: var(--serif); font-size: 11px; white-space: nowrap; }
 .badges { display: flex; align-items: end; gap: 14px; min-height: 115px; }
 .badge { width: 70px; height: 104px; overflow: hidden; border-radius: 7px; box-shadow: 0 7px 12px #49362a20; }
-.badge img, .badge .coverFallback { width: 100%; height: 100%; object-fit: cover; }
+.badge img, .badge .badgeFallback { width: 100%; height: 100%; object-fit: cover; }
+.badgeFallback { display: grid; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #f5d28b, #b87532); color: #8d2527; font-family: var(--serif); font-size: 28px; }
 .moreBadge { display: grid; place-items: center; width: 70px; height: 104px; border-radius: 12px; background: #f3dcd8; color: #7b3838; font-family: var(--serif); font-size: 21px; }
 .activityList { display: grid; }
 .activity { display: grid; grid-template-columns: 25px 1fr auto; align-items: center; gap: 9px; padding: 12px 0; border-bottom: 1px solid #eadfd8; }

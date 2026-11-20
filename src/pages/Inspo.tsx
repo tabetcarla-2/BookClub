@@ -11,6 +11,7 @@ type VoteRow = { venue_id: string; user_id: string; vote: 1 | -1 }
 type GroupVisitRow = { venue_id: string; marked_by: string; tried_at: string }
 type RatingRow = { venue_id: string; user_id: string; rating: number }
 type CommentRow = { id: string; venue_id: string; user_id: string; content: string }
+type UpcomingEvent = { id: string; title: string; starts_at: string }
 const venueCategories = ['cafe', 'library', 'bookstore', 'wine-bar', 'other']
 const venueKeywords = ['bookish', 'discussion-friendly', 'good for groups', 'quiet corner', 'cozy', 'coffee', 'wine', 'daytime', 'nighttime', 'outdoor']
 
@@ -35,6 +36,16 @@ function tileCoordinates(latitude: number, longitude: number, zoom: number) {
   const x = ((longitude + 180) / 360) * scale
   const y = ((1 - Math.asinh(Math.tan((latitude * Math.PI) / 180)) / Math.PI) / 2) * scale
   return { x, y }
+}
+
+function meetupDateParts(startsAt: string | null) {
+  const date = startsAt ? new Date(startsAt) : new Date('2026-12-06T19:00:00-05:00')
+  return {
+    full: date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+    month: date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+    day: date.toLocaleDateString(undefined, { day: 'numeric' }),
+    weekday: date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase(),
+  }
 }
 
 function VenueMap({ venues, selectedVenueId, onSelect }: { venues: Venue[]; selectedVenueId: string | null; onSelect: (id: string) => void }) {
@@ -86,6 +97,7 @@ function Inspo() {
   const [error, setError] = useState('')
   const [rsvped, setRsvped] = useState(false)
   const [upcomingEventId, setUpcomingEventId] = useState<string | null>(null)
+  const [upcomingEvent, setUpcomingEvent] = useState<UpcomingEvent | null>(null)
   const [rsvpMembers, setRsvpMembers] = useState<string[]>([])
 
   useEffect(() => {
@@ -129,7 +141,7 @@ function Inspo() {
       setVenues(baseVenues)
       setLoading(false)
       const [eventResult, groupVisitResult, profileResult, voteResult, ratingResult, commentResult] = await Promise.all([
-        supabase.from('events').select('id, title, starts_at').eq('title', 'November book discussion').order('starts_at', { ascending: true }).limit(1).maybeSingle(),
+        supabase.from('events').select('id, title, starts_at').in('title', ['December book discussion', 'November book discussion']).order('starts_at', { ascending: true }).limit(1).maybeSingle(),
         venueIds.length > 0 ? supabase.from('venue_group_visits').select('venue_id, marked_by, tried_at').in('venue_id', venueIds) : Promise.resolve({ data: [] as GroupVisitRow[] }),
         supabase.from('profiles').select('id, full_name, username'),
         venueIds.length > 0 ? supabase.from('venue_votes').select('venue_id, user_id, vote').in('venue_id', venueIds) : Promise.resolve({ data: [] as VoteRow[] }),
@@ -139,6 +151,7 @@ function Inspo() {
       if (cancelled) return
       const event = eventResult.data as { id: string; title: string; starts_at: string } | null
       setUpcomingEventId(event?.id ?? null)
+      setUpcomingEvent(event)
       const names = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile.full_name || `@${profile.username}`]))
       if (event) {
         const { data: rsvps } = await supabase.from('event_rsvps').select('user_id').eq('event_id', event.id)
@@ -309,6 +322,7 @@ function Inspo() {
     return matchesTrial && matchesTag
   })
   const topVotedVenues = [...visibleVenues].sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)).slice(0, 3)
+  const meetupDate = meetupDateParts(upcomingEvent?.starts_at ?? null)
 
   return <section className={`${styles.page} editorial-page`}>
     <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEETUPS</p><h1>Our meetup <em>spots.</em></h1><p className="editorial-subtitle">Suggest new places, vote on where to meet, and see where we’ve gathered around the city.</p></div></section>
@@ -317,13 +331,13 @@ function Inspo() {
         <section className={styles.upcomingMeeting}>
           <div className={styles.upcomingDetails}>
             <p className={styles.heroKicker}>UPCOMING MEETUP</p>
-            <h2>November book discussion</h2>
-            <p className={styles.meetingMeta}>Thursday, November 21 · 7:00 PM</p>
+            <h2>{upcomingEvent?.title || 'December book discussion'}</h2>
+            <p className={styles.meetingMeta}>{meetupDate.full} · 7:00 PM</p>
             <p className={styles.meetingMeta}>Location to be decided by the club</p>
             <button type="button" className={`${styles.rsvpButton} ${rsvped ? styles.rsvped : ''}`} onClick={toggleRsvp}>{rsvped ? '✓ RSVP’d' : 'RSVP'}</button>
             <p className={styles.rsvpList}>{rsvpMembers.length > 0 ? `${rsvpMembers.join(', ')} ${rsvpMembers.length === 1 ? 'is' : 'are'} coming.` : 'No one has RSVP’d yet.'}</p>
           </div>
-          <aside className={styles.calendarCard} aria-label="November meetup date"><CalendarIcon size={19} /><span>November 2026</span><strong>21</strong><small>THU · 7 PM</small></aside>
+          <aside className={styles.calendarCard} aria-label="December meetup date"><CalendarIcon size={19} /><span>{meetupDate.month}</span><strong>{meetupDate.day}</strong><small>{meetupDate.weekday} · 7 PM</small></aside>
         </section>
         <section className={styles.votePanel}>
           <div className={styles.votePanelHeading}><div><h2>Where shall we meet?</h2><p>Choose your top pick for the next meetup.</p></div><small>Top picks</small></div>

@@ -4,16 +4,19 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './Login.module.css'
 
+// This is intentionally shared for the private friends-only club. It keeps the
+// UI email-only while still creating regular Supabase accounts.
+const CLUB_PASSWORD = 'testing'
+
 function Login() {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const navigate = useNavigate()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const redirectTo = location.state?.from?.pathname || '/'
 
@@ -28,24 +31,65 @@ function Login() {
     setLoading(true)
     setError('')
 
-    const result = mode === 'sign-in'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
+    const normalizedEmail = email.trim().toLowerCase()
+    let user: { id: string } | null = null
+    let authError: { message: string } | null = null
+
+    if (mode === 'sign-up') {
+      const signUpResult = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: CLUB_PASSWORD,
+        options: { data: { full_name: fullName.trim() } },
       })
 
-    const { error, data } = result
+      user = signUpResult.data.user
+      authError = signUpResult.error
+    } else {
+      const signInResult = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: CLUB_PASSWORD,
+      })
 
-    if (error) {
-      setError(error.message)
+      user = signInResult.data.user
+      authError = signInResult.error
+    }
+
+    if (authError && /email not confirmed/i.test(authError.message)) {
+      setError('This account needs email confirmation turned off in Supabase: Authentication → Providers → Email → Confirm email.')
       setLoading(false)
       return
     }
 
-    if (mode === 'sign-up' && !data.session) {
-      setError('Check your email to confirm your account, then come back to sign in.')
+    if (authError && /already registered|already exists/i.test(authError.message)) {
+      setError('This email already has an account. Switch to Sign in, or remove the old account from Supabase before recreating it with the new club login.')
+      setLoading(false)
+      return
+    }
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    if (!user) {
+      setError('Supabase requires email confirmation. Disable Confirm email in Authentication settings for this private club.')
+      setLoading(false)
+      return
+    }
+
+    const profileResult = mode === 'sign-up'
+      ? await supabase.from('profiles').upsert({
+          id: user.id,
+          username: normalizedEmail,
+          full_name: fullName.trim(),
+        })
+      : await supabase.from('profiles').update({ username: normalizedEmail }).eq('id', user.id)
+
+    const profileError = profileResult.error
+
+    if (profileError) {
+      setError(profileError.message)
       setLoading(false)
       return
     }
@@ -61,9 +105,7 @@ function Login() {
         <h1>{mode === 'sign-in' ? <>Welcome <em>back.</em></> : <>Join the <em>club.</em></>}</h1>
 
         <p className={styles.description}>
-          {mode === 'sign-in'
-            ? 'Sign in to return to your reading room.'
-            : 'Create your account and find your place in the reading room.'}
+          {mode === 'sign-in' ? 'Enter your email to return to the reading room.' : 'Create your club account with your name and email.'}
         </p>
 
         <form onSubmit={handleLogin}>
@@ -78,7 +120,6 @@ function Login() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
-
             </>
           )}
 
@@ -93,17 +134,6 @@ function Login() {
             required
           />
 
-          <label htmlFor="password">Password</label>
-
-          <input
-            id="password"
-            type="password"
-            placeholder="Your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
           {error && <p className={styles.error}>{error}</p>}
 
           <button
@@ -111,9 +141,7 @@ function Login() {
             type="submit"
             disabled={loading}
           >
-            {loading
-              ? mode === 'sign-in' ? 'Signing in...' : 'Creating account...'
-              : mode === 'sign-in' ? 'Enter the reading room →' : 'Create my account →'}
+            {loading ? 'Entering the club…' : mode === 'sign-in' ? 'Enter the club →' : 'Create my account →'}
           </button>
         </form>
 

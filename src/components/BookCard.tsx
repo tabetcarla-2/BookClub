@@ -118,12 +118,12 @@ function BookCard({
                 <button type="button" className={`${styles.voteButton} ${interaction.userVote === 1 ? styles.activeVote : ''}`} onClick={() => onVote?.(1)} aria-label="Upvote" aria-pressed={interaction.userVote === 1}>↑ <span>{interaction.upvotes}</span></button>
                 <button type="button" className={`${styles.voteButton} ${interaction.userVote === -1 ? styles.activeDownvote : ''}`} onClick={() => onVote?.(-1)} aria-label="Downvote" aria-pressed={interaction.userVote === -1}>↓ <span>{interaction.downvotes}</span></button>
               </div>
-              <button type="button" className={`${styles.readButton} ${interaction.readByMe ? styles.read : ''}`} onClick={() => onToggleRead?.()} aria-label={interaction.readByMe ? 'Remove read flag' : 'Mark as read'} aria-pressed={interaction.readByMe}>
-                <span className={styles.flag} aria-hidden="true">⚑</span> {interaction.readByMe ? 'Read' : 'Mark read'}
+              <button type="button" className={`${styles.readButton} ${interaction.readByMe ? styles.read : ''}`} onClick={() => onToggleRead?.()} aria-label={interaction.readByMe ? 'Remove personal read flag' : 'Mark as personally read'} aria-pressed={interaction.readByMe}>
+                <span className={styles.flag} aria-hidden="true">⚑</span> {interaction.readByMe ? 'I read this' : 'I’ve read it'}
               </button>
             </div>
 
-            {interaction.readers.length > 0 && <small className={styles.readers}>Read by {interaction.readers.join(', ')}</small>}
+            {interaction.readers.length > 0 && <small className={styles.readers}>Personally read by {interaction.readers.join(', ')}</small>}
 
             <div className={styles.comments}>
               {interaction.comments.map((comment) => (
