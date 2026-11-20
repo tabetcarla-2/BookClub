@@ -8,7 +8,7 @@ import styles from './Home.module.css'
 
 type HomeBook = { id: string; title: string; author: string; cover_url: string | null; description: string | null }
 type RsvpMember = { name: string; avatarUrl: string | null }
-type Activity = { id: string; name: string; text: string; time: string }
+type Activity = { id: string; name: string; avatarUrl: string | null; text: string; time: string; timestamp: string }
 
 const fallbackBook: HomeBook = { id: 'demo-current', title: "A Husband's Secret", author: 'Liane Moriarty', cover_url: coverImage, description: 'A seemingly perfect family is upended by a letter that was never meant to be opened.' }
 const fallbackMeetup = { title: 'November book discussion', date: 'Thu, Nov 21', time: '7:00 PM', venue: 'The Rabbit Books & Bar' }
@@ -44,15 +44,14 @@ function Home() {
       ])
       if (cancelled || !current) return
       const names = new Map((profiles ?? []).map((profile) => [profile.id, { name: profile.full_name || profile.username || 'a member', avatarUrl: profile.avatar_url }]))
-      const [{ data: selectedBook }, { data: progressRows }, { data: event }] = await Promise.all([
+      const [{ data: selectedBook }, { data: currentProgressRow }, { data: event }] = await Promise.all([
         supabase.from('books').select('id, title, author, cover_url, description').eq('id', current.book_id).single(),
-        supabase.from('reading_progress').select('progress, status').eq('book_id', current.book_id),
+        supabase.from('reading_progress').select('progress, status').eq('book_id', current.book_id).eq('user_id', user.id).maybeSingle(),
         supabase.from('events').select('id, title, starts_at, venue_id').gte('starts_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(1).maybeSingle(),
       ])
       if (cancelled) return
       if (selectedBook) setBook({ ...selectedBook, cover_url: selectedBook.cover_url || (selectedBook.title.toLowerCase() === "a husband's secret" ? coverImage : null) })
-      const activeProgress = (progressRows ?? []).filter((row) => row.status !== 'skipping')
-      if (activeProgress.length > 0) setProgress(Math.round(activeProgress.reduce((sum, row) => sum + row.progress, 0) / activeProgress.length))
+      setProgress(currentProgressRow?.status === 'skipping' ? 0 : currentProgressRow?.progress ?? 0)
 
       if (event) {
         const [{ data: rsvps }, { data: venue }] = await Promise.all([
@@ -64,14 +63,35 @@ function Home() {
         setRsvpMembers((rsvps ?? []).map((rsvp) => names.get(rsvp.user_id) ?? { name: 'a member', avatarUrl: null }))
       }
 
-      const [{ data: comments }, { data: reviews }] = await Promise.all([
-        supabase.from('book_comments').select('id, user_id, content, created_at').eq('book_id', current.book_id).order('created_at', { ascending: false }).limit(3),
-        supabase.from('reviews').select('id, user_id, comment, created_at').eq('book_id', current.book_id).order('created_at', { ascending: false }).limit(3),
+      const [{ data: comments }, { data: reviews }, { data: backlogItems }, { data: votes }, { data: progressActivityRows }] = await Promise.all([
+        supabase.from('book_comments').select('id, user_id, book_id, created_at').order('created_at', { ascending: false }).limit(8),
+        supabase.from('reviews').select('id, user_id, book_id, created_at, rating').order('created_at', { ascending: false }).limit(8),
+        supabase.from('backlog_items').select('id, user_id, book_id, created_at').eq('visibility', 'club').order('created_at', { ascending: false }).limit(8),
+        supabase.from('book_votes').select('book_id, user_id, vote, created_at').order('created_at', { ascending: false }).limit(8),
+        supabase.from('reading_progress').select('user_id, book_id, progress, status, updated_at').order('updated_at', { ascending: false }).limit(8),
       ])
+      const activityBookIds = Array.from(new Set([
+        ...(comments ?? []).map((item) => item.book_id),
+        ...(reviews ?? []).map((item) => item.book_id),
+        ...(backlogItems ?? []).map((item) => item.book_id),
+        ...(votes ?? []).map((item) => item.book_id),
+        ...(progressActivityRows ?? []).map((item) => item.book_id),
+      ].filter((bookId) => bookId !== current.book_id)))
+      const { data: activityBooks } = activityBookIds.length
+        ? await supabase.from('books').select('id, title').in('id', activityBookIds)
+        : { data: [] as { id: string; title: string }[] }
+      const bookNames = new Map([
+        ...(selectedBook ? [[selectedBook.id, selectedBook.title] as [string, string]] : []),
+        ...(activityBooks ?? []).map((item) => [item.id, item.title] as [string, string]),
+      ])
+      const activityBookTitle = (bookId: string) => bookNames.get(bookId) ?? 'a book'
       const activityItems: Activity[] = [
-        ...(comments ?? []).map((item) => ({ id: item.id, name: names.get(item.user_id)?.name ?? 'A member', text: 'added a comment', time: shortTime(item.created_at) })),
-        ...(reviews ?? []).map((item) => ({ id: item.id, name: names.get(item.user_id)?.name ?? 'A member', text: 'left a review', time: shortTime(item.created_at) })),
-      ].slice(0, 3)
+        ...(comments ?? []).map((item) => ({ id: item.id, name: names.get(item.user_id)?.name ?? 'A member', avatarUrl: names.get(item.user_id)?.avatarUrl ?? null, text: `commented on ${activityBookTitle(item.book_id)}`, time: shortTime(item.created_at), timestamp: item.created_at })),
+        ...(reviews ?? []).map((item) => ({ id: item.id, name: names.get(item.user_id)?.name ?? 'A member', avatarUrl: names.get(item.user_id)?.avatarUrl ?? null, text: `left a review for ${activityBookTitle(item.book_id)}`, time: shortTime(item.created_at), timestamp: item.created_at })),
+        ...(backlogItems ?? []).map((item) => ({ id: item.id, name: names.get(item.user_id)?.name ?? 'A member', avatarUrl: names.get(item.user_id)?.avatarUrl ?? null, text: `added ${activityBookTitle(item.book_id)} to the backlog`, time: shortTime(item.created_at), timestamp: item.created_at })),
+        ...(votes ?? []).map((item) => ({ id: `${item.book_id}-${item.user_id}-${item.created_at}`, name: names.get(item.user_id)?.name ?? 'A member', avatarUrl: names.get(item.user_id)?.avatarUrl ?? null, text: `${item.vote === 1 ? 'upvoted' : 'downvoted'} ${activityBookTitle(item.book_id)}`, time: shortTime(item.created_at), timestamp: item.created_at })),
+        ...(progressActivityRows ?? []).map((item) => ({ id: `${item.book_id}-${item.user_id}-${item.updated_at}`, name: names.get(item.user_id)?.name ?? 'A member', avatarUrl: names.get(item.user_id)?.avatarUrl ?? null, text: `updated progress on ${activityBookTitle(item.book_id)} to ${item.progress}%`, time: shortTime(item.updated_at), timestamp: item.updated_at })),
+      ].sort((first, second) => new Date(second.timestamp).getTime() - new Date(first.timestamp).getTime()).slice(0, 3)
       if (!cancelled) setActivity(activityItems)
     }
     loadHome()
@@ -114,7 +134,7 @@ function Home() {
       </div>
       <div className={styles.activityPanel}>
         <h2>Recent activity</h2>
-        {activity.length > 0 ? activity.map((item) => <div className={styles.activityItem} key={item.id}><span className={styles.activityAvatar}>{item.name.slice(0, 1).toUpperCase()}</span><p><strong>{item.name}</strong> {item.text} <small>· {item.time}</small></p></div>) : <p className={styles.emptyActivity}>Club activity will show up here as people read, review, and discuss.</p>}
+        {activity.length > 0 ? activity.map((item) => <div className={styles.activityItem} key={item.id}>{item.avatarUrl ? <img className={styles.activityAvatar} src={item.avatarUrl} alt={`${item.name}'s profile`} /> : <span className={styles.activityAvatar}>{item.name.slice(0, 1).toUpperCase()}</span>}<p><strong>{item.name}</strong> {item.text} <small>· {item.time}</small></p></div>) : <p className={styles.emptyActivity}>Club activity will show up here as people read, review, and discuss.</p>}
         <Link to="/current-book" className={styles.textLink}>See more <span>→</span></Link>
       </div>
     </section>

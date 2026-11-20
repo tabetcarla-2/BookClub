@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
@@ -32,6 +32,10 @@ function Profile() {
   const [editName, setEditName] = useState('')
   const [savingName, setSavingName] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [avatarDraft, setAvatarDraft] = useState<{ file: File; url: string } | null>(null)
+  const [avatarZoom, setAvatarZoom] = useState(1)
+  const [avatarPosition, setAvatarPosition] = useState({ x: 50, y: 50 })
+  const avatarDrag = useRef<{ x: number; y: number; positionX: number; positionY: number } | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -134,19 +138,72 @@ function Profile() {
     setSavingName(false)
   }
 
-  async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+  function selectAvatar(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-    if (!supabase || !user || !file) return
+    if (!file) return
+    if (avatarDraft) URL.revokeObjectURL(avatarDraft.url)
+    setAvatarDraft({ file, url: URL.createObjectURL(file) })
+    setAvatarZoom(1)
+    setAvatarPosition({ x: 50, y: 50 })
+    event.target.value = ''
+  }
+
+  async function saveAvatar() {
+    if (!supabase || !user || !avatarDraft || uploading) return
     setUploading(true); setError('')
-    const extension = file.name.split('.').pop() || 'jpg'
-    const path = `${user.id}/${Date.now()}.${extension}`
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
-    if (uploadError) { setError(uploadError.message); setUploading(false); return }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-    const { error: profileError } = await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id)
-    if (profileError) setError(profileError.message)
-    else setProfile((current) => ({ ...current, avatar_url: data.publicUrl }))
+    try {
+      const image = new Image()
+      image.src = avatarDraft.url
+      await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('Could not read that image.')) })
+      const size = 512
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('Could not prepare that image.')
+      const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight) * avatarZoom
+      const width = image.naturalWidth * scale
+      const height = image.naturalHeight * scale
+      const x = (size - width) / 2 + ((avatarPosition.x - 50) / 50) * ((width - size) / 2)
+      const y = (size - height) / 2 + ((avatarPosition.y - 50) / 50) * ((height - size) / 2)
+      context.drawImage(image, x, y, width, height)
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', .9))
+      if (!blob) throw new Error('Could not prepare that image.')
+      const path = `${user.id}/${Date.now()}.jpg`
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { error: profileError } = await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id)
+      if (profileError) throw profileError
+      setProfile((current) => ({ ...current, avatar_url: data.publicUrl }))
+      URL.revokeObjectURL(avatarDraft.url)
+      setAvatarDraft(null)
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Could not save that image.')
+    }
     setUploading(false)
+  }
+
+  function startAvatarDrag(event: React.PointerEvent<HTMLDivElement>) {
+    event.currentTarget.setPointerCapture(event.pointerId)
+    avatarDrag.current = { x: event.clientX, y: event.clientY, positionX: avatarPosition.x, positionY: avatarPosition.y }
+  }
+
+  function moveAvatarDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (!avatarDrag.current) return
+    const deltaX = ((event.clientX - avatarDrag.current.x) / event.currentTarget.clientWidth) * 100
+    const deltaY = ((event.clientY - avatarDrag.current.y) / event.currentTarget.clientHeight) * 100
+    setAvatarPosition({ x: Math.max(0, Math.min(100, avatarDrag.current.positionX + deltaX)), y: Math.max(0, Math.min(100, avatarDrag.current.positionY + deltaY)) })
+  }
+
+  function stopAvatarDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (avatarDrag.current) event.currentTarget.releasePointerCapture(event.pointerId)
+    avatarDrag.current = null
+  }
+
+  function zoomAvatar(event: React.WheelEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setAvatarZoom((current) => Math.max(1, Math.min(3, Number((current - event.deltaY * 0.002).toFixed(2)))))
   }
 
   const displayName = profile.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reader'
@@ -160,7 +217,7 @@ function Profile() {
     <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>YOUR PROFILE</p><h1>{displayName}’s <em>books.</em></h1><p className="editorial-subtitle">Your reading, badges, and book club activity.</p><div className={styles.profileIdentity}>{profile.avatar_url ? <img className={styles.avatar} src={profile.avatar_url} alt={`${displayName}'s profile`} /> : <div className={styles.avatar}>{initials}</div>}<div><h2>{displayName}</h2><p>{profile.username || 'reader'}</p><button type="button" className={styles.editProfileButton} onClick={() => { setEditName(displayName); setEditing((open) => !open) }}>{editing ? 'Close' : 'Edit profile'}</button></div></div></div></section>
     <div className={styles.profileShell}>
       {error && <p className={styles.error}>{error}</p>}
-      {editing && <section className={styles.editPanel}><label>Display name<input value={editName} onChange={(event) => setEditName(event.target.value)} /></label><label>Profile photo<span className={styles.photoUpload}>{uploading ? 'Uploading…' : 'Choose a new photo'}<input type="file" accept="image/*" onChange={uploadAvatar} disabled={uploading} /></span></label><button type="button" className="primary-button" onClick={saveProfileName} disabled={savingName || !editName.trim()}>{savingName ? 'Saving…' : 'Save profile'}</button></section>}
+      {editing && <section className={styles.editPanel}><label>Display name<input value={editName} onChange={(event) => setEditName(event.target.value)} /></label><label>Profile photo<span className={styles.photoUpload}>{avatarDraft ? 'Choose a different photo' : 'Choose a new photo'}<input type="file" accept="image/*" onChange={selectAvatar} disabled={uploading} /></span></label>{avatarDraft && <div className={styles.avatarEditor}><p className={styles.cropHint}>Drag the photo in any direction · scroll to zoom</p><div className={styles.avatarCrop} onPointerDown={startAvatarDrag} onPointerMove={moveAvatarDrag} onPointerUp={stopAvatarDrag} onPointerCancel={stopAvatarDrag} onWheel={zoomAvatar}><img src={avatarDraft.url} alt="Profile crop preview" style={{ transform: `translate(${(avatarPosition.x - 50) * (avatarZoom - 1)}%, ${(avatarPosition.y - 50) * (avatarZoom - 1)}%) scale(${avatarZoom})` }} /></div><label>Zoom<input type="range" min="1" max="3" step="0.05" value={avatarZoom} onChange={(event) => setAvatarZoom(Number(event.target.value))} /></label><button type="button" className="primary-button" onClick={saveAvatar} disabled={uploading}>{uploading ? 'Saving photo…' : 'Save photo'}</button></div>}<button type="button" className="primary-button" onClick={saveProfileName} disabled={savingName || !editName.trim()}>{savingName ? 'Saving…' : 'Save profile'}</button></section>}
       <div className={styles.profileGrid}>
         <section className={styles.currentSection}><div className={styles.cardEyebrow}>CURRENT BOOK</div>{loading ? <p className={styles.muted}>Loading your current book…</p> : currentBook ? <div className={styles.currentBook}>{currentBookCover ? <img src={currentBookCover} alt={`Cover of ${currentBook.title}`} /> : <div className={styles.coverFallback}>{currentBook.title.slice(0, 1)}</div>}<div className={styles.currentBookInfo}><span className={`${styles.status} ${styles[currentStatus.toLowerCase().replace(' ', '')]}`}>{currentStatus}</span><h2>{currentBook.title}</h2><p>{currentBook.author}</p><div className={styles.progress}><span style={{ width: `${currentProgress?.progress ?? 0}%` }} /><small>{currentProgress?.progress ?? 0}% complete</small></div></div></div> : <p className={styles.muted}>There is no current book yet.</p>}</section>
         <section className={styles.glanceCard}><h2>Your Club <em>at a Glance.</em></h2><div className={styles.glanceStats}><div><span>▤</span><strong>{stats.booksRead}</strong><small>Books read</small></div><div><span>☆</span><strong>{averageRating}</strong><small>Avg. rating</small></div><div><span>♧</span><strong>{stats.meetups}</strong><small>Meetups attended</small></div></div></section>

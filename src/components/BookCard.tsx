@@ -54,7 +54,8 @@ function BookCard({
   const [commentText, setCommentText] = useState('')
   const [commenting, setCommenting] = useState(false)
   const displayDescription = description && !/^form:|^nyt:|new york times bestseller/i.test(description) ? description : null
-  const displayGenre = genre && !/^form:|^nyt:|new york times bestseller/i.test(genre) ? genre : null
+  const normalizedGenre = genre?.replace(/^genre\s*:\s*/i, '').trim()
+  const displayGenre = normalizedGenre && !/^form:|^nyt:|new york times bestseller/i.test(normalizedGenre) ? normalizedGenre : null
   const genreText = displayGenre?.toLowerCase() ?? ''
   const genreTone = genreText.includes('romance') ? 'romance' : genreText.includes('fantasy') || genreText.includes('magic') ? 'fantasy' : genreText.includes('mystery') || genreText.includes('thriller') ? 'mystery' : genreText.includes('history') ? 'history' : genreText.includes('science') ? 'science' : 'fiction'
 
@@ -100,7 +101,7 @@ function BookCard({
         <h3>{title}</h3>
         <p>{author}</p>
 
-        {displayGenre && <small className={`${styles.genre} ${styles[genreTone]}`}>{displayGenre}</small>}
+        {displayGenre ? <small className={`${styles.genre} ${styles[genreTone]}`}>{displayGenre}</small> : <span className={styles.genreSpacer} aria-hidden="true" />}
 
         {addedBy && <small className={styles.addedBy}>Added by {addedBy}</small>}
 

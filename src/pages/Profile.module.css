@@ -62,6 +62,13 @@
 .editPanel input:focus { border-color: #a34042; }
 .photoUpload { display: block; padding: 10px 12px; border: 1px solid #d9ccc4; border-radius: 999px; background: var(--paper); color: var(--ink); cursor: pointer; }
 .photoUpload input { display: none; }
+.avatarEditor { display: grid; gap: 8px; min-width: 210px; padding: 12px; border: 1px solid #eadfd8; border-radius: 14px; background: var(--cream); }
+.cropHint { margin: 0; color: var(--muted); font-size: 9px; text-align: center; }
+.avatarCrop { width: 128px; height: 128px; overflow: hidden; margin: 0 auto 3px; border-radius: 50%; background: #dfc6bc; cursor: grab; touch-action: none; }
+.avatarCrop:active { cursor: grabbing; }
+.avatarCrop img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; user-select: none; pointer-events: none; }
+.avatarEditor label { display: grid; gap: 4px; color: var(--muted); font-size: 9px; }
+.editPanel .avatarEditor input[type='range'] { width: 100%; padding: 0; border: 0; border-radius: 0; accent-color: var(--burgundy); }
 .muted, .empty { color: var(--muted); font-size: 12px; }
 .empty { margin: 0; }
 .error { margin: 0 0 14px; color: #a33d43; font-size: 11px; }

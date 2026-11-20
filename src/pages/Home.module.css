@@ -62,7 +62,7 @@
 .activityPanel { padding-left: 38px; border-left: 1px solid var(--border); }
 .activityPanel h2 { margin: 0 0 22px; color: var(--ink); font-family: var(--serif); font-size: 1.8rem; font-weight: 500; letter-spacing: -0.04em; }
 .activityItem { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 17px; }
-.activityAvatar { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 50%; background: #d7c2b8; color: #49362e; font-size: 0.72rem; font-weight: 700; }
+.activityAvatar { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 50%; background: #d7c2b8; color: #49362e; font-size: 0.72rem; font-weight: 700; object-fit: cover; }
 .activityItem p { margin: 3px 0 0; color: #5f524b; font-size: 0.8rem; line-height: 1.4; }
 .activityItem strong { color: var(--ink); }
 .activityItem small { color: #988b83; }
