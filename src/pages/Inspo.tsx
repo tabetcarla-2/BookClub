@@ -14,6 +14,7 @@ type CommentRow = { id: string; venue_id: string; user_id: string; content: stri
 type UpcomingEvent = { id: string; title: string; starts_at: string }
 const venueCategories = ['cafe', 'library', 'bookstore', 'wine-bar', 'other']
 const venueKeywords = ['bookish', 'discussion-friendly', 'good for groups', 'quiet corner', 'cozy', 'coffee', 'wine', 'daytime', 'nighttime', 'outdoor']
+const when2MeetUrl = import.meta.env.VITE_WHEN2MEET_URL || 'https://www.when2meet.com/'
 
 function googleMapsUrl(name: string, address: string | null) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address ? `${name}, ${address}` : name)}`
@@ -344,6 +345,14 @@ function Inspo() {
           {topVotedVenues.length ? <div className={styles.voteChoices}>{topVotedVenues.map((venue, index) => <article className={styles.voteChoice} key={venue.id}><span className={styles.voteRank}>{index + 1}</span><div className={`${styles.category} ${styles[venue.category] || styles.other}`}>{categoryLabel(venue.categories[0] || venue.category)}</div><h3>{venue.name}</h3><p>{venue.address || 'Address to come'}</p><strong>♧ {venue.upvotes - venue.downvotes} vote{Math.abs(venue.upvotes - venue.downvotes) === 1 ? '' : 's'}</strong><button type="button" className={venue.userVote === 1 ? styles.choiceVoted : ''} onClick={() => voteOnVenue(venue, 1)}>{venue.userVote === 1 ? '✓ Voted' : 'Vote'}</button></article>)}</div> : <p className={styles.voteEmpty}>Add a meetup spot below to start the vote.</p>}
         </section>
       </div>
+      <section className={styles.when2MeetCard}>
+        <div>
+          <p className={styles.heroKicker}>FIND A TIME</p>
+          <h2>When should we meet?</h2>
+          <p>Open the club’s When2Meet poll and mark every time that works for you.</p>
+        </div>
+        <a href={when2MeetUrl} target="_blank" rel="noreferrer" className={styles.when2MeetButton}>Open When2Meet <span aria-hidden="true">↗</span></a>
+      </section>
       <div className={styles.venueSection} data-trial-filter={trialFilter} data-visible-count={visibleVenues.length}>
       <div className={styles.sectionHeading}><div><p className={styles.heroKicker}>VENUE SUGGESTIONS</p><h2>Recommended spots.</h2></div><div className={styles.headingActions}><button type="button" className="primary-button" onClick={() => setShowAddForm((open) => !open)}>{showAddForm ? 'Close' : '+ Add place'}</button><div className={styles.viewToggle}><button type="button" className={view === 'cards' ? styles.activeView : ''} onClick={() => setView('cards')}>Cards</button><button type="button" className={view === 'map' ? styles.activeView : ''} onClick={() => setView('map')}>Map view</button></div></div></div>
       {showAddForm && <div className={styles.addPanel}><div className={styles.addPanelIntro}><strong>Add a meeting spot</strong><span>Search a place and choose the exact result so its pin lands correctly.</span></div><div className={styles.venueForm}><div className={styles.addressSearch}><label htmlFor="venue-search">Place name</label><input id="venue-search" value={name} onChange={(e) => { setName(e.target.value); setPlaceSelected(false); setCoordinates(null); setAddress('') }} placeholder="Search a cafe, library, or restaurant..." autoComplete="off" />{(searching || suggestions.length > 0) && <div className={styles.suggestions}>{searching && <p>Searching Manhattan...</p>}{suggestions.map((suggestion) => <button type="button" key={suggestion.place_id} onClick={() => chooseSuggestion(suggestion)}><strong>{suggestion.name || suggestion.display_name.split(',')[0]}</strong><small>{cleanAddress(suggestion.display_name, suggestion.name || suggestion.display_name.split(',')[0])}</small></button>)}</div>}</div>{address && <p className={styles.selectedAddress}><span>Address selected</span><strong>{address}</strong></p>}<label className={styles.categoryField}>Category<select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Place category"><option value="cafe">Cafe</option><option value="library">Library</option><option value="bookstore">Bookstore</option><option value="wine-bar">Wine bar</option><option value="other">Other</option></select></label><label className={styles.notesField}>Note<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Why recommend it? (optional)" /></label><button className="primary-button" onClick={suggestVenue} disabled={saving || !address}>{saving ? 'Adding...' : 'Save place'}</button></div></div>}

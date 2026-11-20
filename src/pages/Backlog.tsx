@@ -327,7 +327,12 @@ function Backlog() {
     setError('')
 
     if (!supabase || !user) {
-      setBooks((previous) => [...previous, { id: `demo-${Date.now()}`, ...metadata }])
+      const demoBook = { id: `demo-${Date.now()}`, ...metadata }
+      setBooks((previous) => [...previous, demoBook])
+      setInteractions((previous) => ({
+        ...previous,
+        [demoBook.id]: previous[demoBook.id] ?? { upvotes: 0, downvotes: 0, userVote: null, readByMe: false, readers: [], comments: [] },
+      }))
       setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false); return
     }
 
@@ -358,6 +363,10 @@ function Backlog() {
     else {
       const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'you'
       setBooks((previous) => [...previous.filter((book) => book.id !== addedBook.id), { ...addedBook, addedBy: displayName }])
+      setInteractions((previous) => ({
+        ...previous,
+        [addedBook.id]: previous[addedBook.id] ?? { upvotes: 0, downvotes: 0, userVote: null, readByMe: false, readers: [], comments: [] },
+      }))
     }
     setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false)
   }
