@@ -23,7 +23,7 @@ function Profile() {
   const { user } = useAuth()
   const [profile, setProfile] = useState<ProfileData>({ full_name: '', username: '', avatar_url: null })
   const [currentBook, setCurrentBook] = useState<Book | null>(null)
-  const [currentProgress, setCurrentProgress] = useState<{ progress: number; status: string } | null>(null)
+  const [currentProgress, setCurrentProgress] = useState<{ progress: number; status: string; updated_at?: string } | null>(null)
   const [badges, setBadges] = useState<Badge[]>([])
   const [activity, setActivity] = useState<Activity[]>([])
   const [stats, setStats] = useState({ booksRead: 0, averageRating: null as number | null, meetups: 0 })
@@ -38,11 +38,11 @@ function Profile() {
     let cancelled = false
     async function loadProfile() {
       if (!supabase || !user) { setLoading(false); return }
-      const cacheKey = `bookclub-profile-v2-${user.id}`
+      const cacheKey = `bookclub-profile-v3-${user.id}`
       try {
         const cached = localStorage.getItem(cacheKey)
         if (cached) {
-          const snapshot = JSON.parse(cached) as { profile?: ProfileData; currentBook?: Book | null; currentProgress?: { progress: number; status: string } | null; badges?: Badge[]; activity?: Activity[]; stats?: typeof stats }
+          const snapshot = JSON.parse(cached) as { profile?: ProfileData; currentBook?: Book | null; currentProgress?: { progress: number; status: string; updated_at?: string } | null; badges?: Badge[]; activity?: Activity[]; stats?: typeof stats }
           if (snapshot.profile) { setProfile(snapshot.profile); setEditName(snapshot.profile.full_name) }
           if (snapshot.currentBook !== undefined) setCurrentBook(snapshot.currentBook)
           if (snapshot.currentProgress !== undefined) setCurrentProgress(snapshot.currentProgress)
@@ -54,17 +54,21 @@ function Profile() {
       } catch {
         // Cache is an instant preview only; Supabase remains the source of truth.
       }
-      const [profileResult, currentResult, clubBooksResult, completedResult, reviewsResult, visitsResult] = await Promise.all([
+      const [profileResult, currentResult, clubBooksResult, completedResult, reviewsResult, visitsResult, votesResult, commentsResult, progressActivityResult, backlogItemsResult] = await Promise.all([
         supabase.from('profiles').select('full_name, username, avatar_url').eq('id', user.id).maybeSingle(),
         supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle(),
         supabase.from('club_books').select('book_id, is_current'),
         supabase.from('reading_progress').select('book_id, updated_at').eq('user_id', user.id).eq('status', 'completed'),
         supabase.from('reviews').select('book_id, rating, comment, created_at').eq('user_id', user.id),
         supabase.from('venue_group_visits').select('tried_at').eq('marked_by', user.id),
+        supabase.from('book_votes').select('book_id, vote, created_at').eq('user_id', user.id),
+        supabase.from('book_comments').select('book_id, created_at').eq('user_id', user.id),
+        supabase.from('reading_progress').select('book_id, progress, status, updated_at').eq('user_id', user.id),
+        supabase.from('backlog_items').select('book_id, created_at').eq('user_id', user.id),
       ])
       if (cancelled) return
-      if (profileResult.error || currentResult.error || clubBooksResult.error || completedResult.error || reviewsResult.error || visitsResult.error) {
-        setError(profileResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || 'Unable to load your profile.')
+      if (profileResult.error || currentResult.error || clubBooksResult.error || completedResult.error || reviewsResult.error || visitsResult.error || votesResult.error || commentsResult.error || progressActivityResult.error || backlogItemsResult.error) {
+        setError(profileResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || votesResult.error?.message || commentsResult.error?.message || progressActivityResult.error?.message || backlogItemsResult.error?.message || 'Unable to load your profile.')
         setLoading(false)
         return
       }
@@ -83,7 +87,14 @@ function Profile() {
       const completedRows = completedResult.data ?? []
       const clubBookIds = new Set((clubBooksResult.data ?? []).map((item) => item.book_id))
       const readIds = Array.from(new Set(completedRows.filter((item) => clubBookIds.has(item.book_id)).map((item) => item.book_id)))
-      const allBookIds = Array.from(new Set([...readIds, ...(currentBookId ? [currentBookId] : [])]))
+      const activityBookIds = [
+        ...(reviewsResult.data ?? []).map((item) => item.book_id),
+        ...(votesResult.data ?? []).map((item) => item.book_id),
+        ...(commentsResult.data ?? []).map((item) => item.book_id),
+        ...(progressActivityResult.data ?? []).map((item) => item.book_id),
+        ...(backlogItemsResult.data ?? []).map((item) => item.book_id),
+      ]
+      const allBookIds = Array.from(new Set([...readIds, ...activityBookIds, ...(currentBookId ? [currentBookId] : [])]))
       const [booksResult, currentProgressResult] = await Promise.all([
         allBookIds.length ? supabase.from('books').select('id, title, author, cover_url').in('id', allBookIds) : Promise.resolve({ data: [], error: null }),
         currentBookId ? supabase.from('reading_progress').select('progress, status').eq('user_id', user.id).eq('book_id', currentBookId).maybeSingle() : Promise.resolve({ data: null, error: null }),
@@ -98,9 +109,11 @@ function Profile() {
       const clubReviews = reviews.filter((review) => clubBookIds.has(review.book_id))
       const ratings = clubReviews.map((review) => Number(review.rating))
       const nextActivity: Activity[] = []
-      if (current && currentProgressResult.data) nextActivity.push({ icon: '▤', text: `Marked ${current.title} as ${currentProgressResult.data.status === 'completed' ? 'completed' : 'reading'}`, date: new Date().toISOString() })
-      clubReviews.forEach((review) => { const book = booksById.get(review.book_id); if (book) nextActivity.push({ icon: '☆', text: `Rated ${book.title} ${review.rating}/5`, date: review.created_at }) })
-      ;(visitsResult.data ?? []).forEach((visit) => nextActivity.push({ icon: '♧', text: 'Attended a book club meetup', date: visit.tried_at }))
+      ;(backlogItemsResult.data ?? []).forEach((item) => { const book = booksById.get(item.book_id); if (book) nextActivity.push({ icon: '＋', text: `Added ${book.title} to the backlog`, date: item.created_at }) })
+      ;(votesResult.data ?? []).forEach((vote) => { const book = booksById.get(vote.book_id); if (book) nextActivity.push({ icon: vote.vote === 1 ? '↑' : '↓', text: `${vote.vote === 1 ? 'Upvoted' : 'Downvoted'} ${book.title}`, date: vote.created_at }) })
+      ;(commentsResult.data ?? []).forEach((comment) => { const book = booksById.get(comment.book_id); if (book) nextActivity.push({ icon: '□', text: `Commented on ${book.title}`, date: comment.created_at }) })
+      ;(progressActivityResult.data ?? []).forEach((progress) => { const book = booksById.get(progress.book_id); if (book) nextActivity.push({ icon: '▤', text: `Updated ${book.title} to ${progress.progress}%`, date: progress.updated_at }) })
+      reviews.forEach((review) => { const book = booksById.get(review.book_id); if (book) nextActivity.push({ icon: '☆', text: `Rated ${book.title} ${review.rating}/5`, date: review.created_at }) })
       nextActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       const nextStats = { booksRead: readIds.length, averageRating: ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null, meetups: (visitsResult.data ?? []).length }
       const nextActivityList = nextActivity.slice(0, 4)
