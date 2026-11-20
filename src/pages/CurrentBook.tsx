@@ -37,6 +37,8 @@ function CurrentBook() {
   const [book, setBook] = useState<Book>(demoBook)
   const [progress, setProgress] = useState(45)
   const [status, setStatus] = useState<ReadingStatus>('reading')
+  const [savedProgress, setSavedProgress] = useState(0)
+  const [savedStatus, setSavedStatus] = useState<ReadingStatus>('reading')
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -66,7 +68,8 @@ function CurrentBook() {
           const parsed = JSON.parse(cached) as { book?: Book; progress?: number; status?: ReadingStatus; memberProgress?: MemberProgress[]; currentReviews?: CurrentReview[] }
           if (parsed.book) setBook(parsed.book)
           if (typeof parsed.progress === 'number') setProgress(parsed.progress)
-          if (parsed.status) setStatus(parsed.status)
+          if (parsed.progress !== undefined) setSavedProgress(parsed.progress)
+          if (parsed.status) { setStatus(parsed.status); setSavedStatus(parsed.status) }
           if (parsed.memberProgress) setMemberProgress(parsed.memberProgress)
           if (parsed.currentReviews) setCurrentReviews(parsed.currentReviews)
           if (parsed.book) setCurrentLoading(false)
@@ -90,8 +93,10 @@ function CurrentBook() {
       if (selectedBook) setBook(selectedBook)
       if (savedProgress) {
         setProgress(savedProgress.progress)
+        setSavedProgress(savedProgress.progress)
         if (savedProgress.status === 'reading' || savedProgress.status === 'skipping' || savedProgress.status === 'completed') {
           setStatus(savedProgress.status)
+          setSavedStatus(savedProgress.status)
           setProgressOpen(false)
         }
       } else { setProgress(0); setStatus('reading'); setProgressOpen(false) }
@@ -165,6 +170,8 @@ function CurrentBook() {
       }, { onConflict: 'user_id,book_id' })
       if (progressError) { setSaveError(progressError.message); setSaving(false); return }
     }
+    setSavedProgress(savedPercent)
+    setSavedStatus(status)
     setDirty(false)
     setSaved(true)
     setProgressOpen(false)
@@ -175,6 +182,14 @@ function CurrentBook() {
     const nextStatus = status === 'skipping' ? 'reading' : 'skipping'
     setStatus(nextStatus)
     setProgressOpen(false)
+    markDirty()
+  }
+
+  function revertToReading() {
+    setStatus('reading')
+    setProgress((current) => Math.min(current, 99))
+    setProgressOpen(true)
+    setActiveTab('discussion')
     markDirty()
   }
 
@@ -220,7 +235,7 @@ function CurrentBook() {
   }
 
   function renderReviews() {
-    const blurred = status !== 'completed'
+    const blurred = savedStatus !== 'completed'
     return <div className={styles.reviewsPane}><h2>Reviews from the room.</h2>{blurred && <p className={styles.muted}>Finish the book to read everyone’s thoughts. You can still see who posted.</p>}{currentReviews.length > 0 ? <div className={styles.currentReviewList}>{currentReviews.map((item) => <article className={`${styles.currentReview} ${item.userId === user?.id ? styles.myReview : ''}`} key={item.id}><div className={styles.currentReviewTop}><strong>{item.userId === user?.id ? 'Your review' : item.author}</strong>{item.userId === user?.id && <div><button type="button" className={styles.editReview} onClick={() => setReviewOpen((open) => !open)}>{reviewOpen ? 'Close' : 'Edit'}</button><button type="button" className={styles.reviewDelete} onClick={() => deleteReview(item.id)}>Delete</button></div>}</div><div className={blurred ? styles.reviewSpoiler : ''}><span className={styles.reviewRatingLine}><RatingStars value={item.rating} /> <small>{item.rating.toFixed(2).replace(/\.00$/, '')}/5</small></span>{item.comment ? <p>{item.comment}</p> : <p className={styles.muted}>No written review.</p>}</div></article>)}</div> : <p className={styles.archiveEmpty}>No reviews have been posted yet.</p>}{!blurred && reviewOpen && <div className={styles.reviewForm}><div className={styles.starRow}><RatingStars value={reviewRating} onChange={setReviewRating} interactive /><strong>{reviewRating.toFixed(2).replace(/\.00$/, '')} / 5</strong></div><textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="What did you think?" rows={4} /><button type="button" className="primary-button" onClick={saveReview}>Save review</button></div>}</div>
   }
 
@@ -230,7 +245,7 @@ function CurrentBook() {
       <div className={styles.sectionHeading}><div className={styles.progressHeading}><span className={styles.progressIcon}><BookOpenIcon size={17} /></span><h2>Add your progress</h2></div><span className={`${styles.statusBadge} ${styles[status]}`}>{status}</span></div>
       <div className={styles.progressRow}><input className={`${styles.progressInput} ${status === 'skipping' ? styles.progressDisabled : ''} ${status === 'completed' ? styles.progressComplete : ''}`} type="range" min="0" max="100" value={progress} disabled={status !== 'reading'} onChange={(e) => updateProgressValue(Number(e.target.value))} /><input className={styles.progressNumber} type="number" min="0" max="100" value={status === 'completed' ? 100 : status === 'skipping' ? 0 : progress} disabled={status !== 'reading'} onChange={(e) => updateProgressValue(Number(e.target.value))} aria-label="Progress percentage" /><span className={styles.percentSign}>%</span></div>
       {status === 'skipping' && <p className={styles.progressStateMessage}>Progress is paused while you skip this book.</p>}
-      {status === 'completed' && <p className={styles.progressStateMessage}>You finished this book.</p>}
+      {status === 'completed' && <div className={styles.progressStateMessage}><span>You finished this book.</span><button type="button" className={styles.revertButton} onClick={revertToReading}>Revert to reading</button></div>}
       {saved && !dirty ? <div className={styles.saveRow}><p className={styles.savedMessage}>Saved</p></div> : dirty ? <div className={styles.saveRow}><p className={styles.muted}>{saveError || 'You have unsaved changes.'}</p><button type="button" className="primary-button" disabled={saving} onClick={saveProgress}>{saving ? 'Saving...' : 'Save progress'}</button></div> : null}
     </section>
   }
@@ -270,7 +285,7 @@ function CurrentBook() {
         <div className={styles.discussionTabs}><button type="button" className={activeTab === 'discussion' ? styles.activeTab : ''} onClick={() => setActiveTab('discussion')}><span aria-hidden="true">◌</span> Discussion <small>{discussionComments.length}</small></button><button type="button" className={activeTab === 'reviews' ? styles.activeTab : ''} onClick={() => setActiveTab('reviews')}><span aria-hidden="true">☆</span> Reviews <small>{currentReviews.length}</small></button></div>
         <div className={`${styles.commentList} ${activeTab === 'reviews' ? styles.tabHidden : ''}`}>
           {discussionComments.length === 0 ? <p className={styles.archiveEmpty}>Start the discussion. Add a thought and choose when the club should see it.</p> : discussionComments.map((comment) => {
-            const revealed = comment.revealAt === 0 || status === 'completed' || progress >= comment.revealAt || comment.userId === user?.id
+            const revealed = comment.revealAt === 0 || savedStatus === 'completed' || savedProgress >= comment.revealAt || comment.userId === user?.id
             return <article className={styles.discussionComment} key={comment.id}><div className={styles.commentMeta}><strong>{comment.author}</strong><small>{comment.revealAt > 0 ? `· hidden until ${comment.revealAt}%` : '· visible to everyone'}</small>{comment.userId === user?.id && <button type="button" className={styles.deleteComment} onClick={() => deleteDiscussionComment(comment.id)} title="Delete comment" aria-label="Delete comment">×</button>}</div><div className={`${styles.commentBody} ${!revealed ? styles.commentHidden : ''}`}>{!revealed && <span className={styles.commentLock}>🔒</span>}<p>{comment.content}</p></div></article>
           })}
         </div>
