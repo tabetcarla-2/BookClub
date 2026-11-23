@@ -120,7 +120,7 @@ function Members() {
   const currentAverage = members.length ? Math.round(members.reduce((sum, member) => sum + (member.statusKey === 'skipping' ? 0 : member.progress), 0) / members.length) : 0
 
   return <section className={`${styles.page} editorial-page`}>
-    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>SHAWTIES</p><h1>Meet the <em>members.</em></h1><p className="editorial-subtitle">They say comparison is the thief of joy, but in this case, it's the motivation to read.</p></div></section>
+    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEMBERS</p><h1>Meet the <em>members.</em></h1><p className="editorial-subtitle">Our smart shawties.</p></div></section>
     <div className={styles.membersShell}>
       <main className={styles.membersMain}>
         <div className={styles.toolbar}><div className={styles.viewLabel}>Current read <span>{members.length}</span></div><label className={styles.search}><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search members..." /></label></div>

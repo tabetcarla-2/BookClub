@@ -172,6 +172,9 @@ function CurrentBook() {
     }
     setSavedProgress(savedPercent)
     setSavedStatus(status)
+    setMemberProgress((members) => members.map((member) => member.id === user?.id
+      ? { ...member, progress: savedPercent, status: status === 'completed' ? 'completed' : status === 'skipping' ? 'skipping' : savedPercent > 0 ? 'reading' : 'not started' }
+      : member))
     setDirty(false)
     setSaved(true)
     setProgressOpen(false)
@@ -264,7 +267,7 @@ function CurrentBook() {
         <div className={`${styles.pageHeroInner} editorial-hero-inner`}>
           <p className={`${styles.heroKicker} editorial-kicker`}>NOVEMBER 2026 · CURRENT BOOK</p>
           <h1>Currently <em>reading.</em></h1>
-          <p className={`${styles.heroSubtitle} editorial-subtitle`}>Read with us, if you dare.</p>
+          <p className={`${styles.heroSubtitle} editorial-subtitle`}>They say comparison is the thief of joy, but in this case, it's the motivation to read.</p>
         </div>
       </section>
       <div className={styles.contentShell}>
