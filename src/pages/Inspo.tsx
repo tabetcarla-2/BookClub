@@ -14,7 +14,7 @@ type CommentRow = { id: string; venue_id: string; user_id: string; content: stri
 type UpcomingEvent = { id: string; title: string; starts_at: string }
 const venueCategories = ['cafe', 'library', 'bookstore', 'wine-bar', 'other']
 const venueKeywords = ['bookish', 'discussion-friendly', 'good for groups', 'quiet corner', 'cozy', 'coffee', 'wine', 'daytime', 'nighttime', 'outdoor']
-const when2MeetUrl = import.meta.env.VITE_WHEN2MEET_URL || 'https://www.when2meet.com/'
+const when2MeetUrl = 'https://www.when2meet.com/?40034234-jVcj9'
 
 function googleMapsUrl(name: string, address: string | null) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address ? `${name}, ${address}` : name)}`
@@ -323,22 +323,22 @@ function Inspo() {
     return matchesTrial && matchesTag
   })
   const topVotedVenues = [...visibleVenues].sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)).slice(0, 3)
-  const meetupDate = meetupDateParts(upcomingEvent?.starts_at ?? null)
+  const meetupDate = { ...meetupDateParts(upcomingEvent?.starts_at ?? null), full: 'Date to be decided', day: '?', weekday: 'DATE TBD' }
 
   return <section className={`${styles.page} editorial-page`}>
-    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEETUPS</p><h1>Our meetup <em>spots.</em></h1><p className="editorial-subtitle">Suggest new places, vote on where to meet, and see where we’ve gathered around the city.</p></div></section>
+    <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>MEETUPS</p><h1>Our meetup <em>spots.</em></h1><p className="editorial-subtitle">Where shall we meet next?</p></div></section>
     <div className={styles.meetupShell}>
       <div className={styles.meetupTopGrid}>
         <section className={styles.upcomingMeeting}>
           <div className={styles.upcomingDetails}>
             <p className={styles.heroKicker}>UPCOMING MEETUP</p>
             <h2>{upcomingEvent?.title || 'December book discussion'}</h2>
-            <p className={styles.meetingMeta}>{meetupDate.full} · 7:00 PM</p>
+            <p className={styles.meetingMeta}>{meetupDate.full} · Time to be decided</p>
             <p className={styles.meetingMeta}>Location to be decided by the club</p>
             <button type="button" className={`${styles.rsvpButton} ${rsvped ? styles.rsvped : ''}`} onClick={toggleRsvp}>{rsvped ? '✓ RSVP’d' : 'RSVP'}</button>
             <p className={styles.rsvpList}>{rsvpMembers.length > 0 ? `${rsvpMembers.join(', ')} ${rsvpMembers.length === 1 ? 'is' : 'are'} coming.` : 'No one has RSVP’d yet.'}</p>
           </div>
-          <aside className={styles.calendarCard} aria-label="December meetup date"><CalendarIcon size={19} /><span>{meetupDate.month}</span><strong>{meetupDate.day}</strong><small>{meetupDate.weekday} · 7 PM</small></aside>
+          <aside className={styles.calendarCard} aria-label="Meetup date to be decided"><CalendarIcon size={19} /><span>{meetupDate.month}</span><strong>{meetupDate.day}</strong><small>{meetupDate.weekday}</small></aside>
         </section>
         <section className={styles.votePanel}>
           <div className={styles.votePanelHeading}><div><h2>Where shall we meet?</h2><p>Choose your top pick for the next meetup.</p></div><small>Top picks</small></div>

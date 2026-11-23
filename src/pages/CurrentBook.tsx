@@ -264,7 +264,7 @@ function CurrentBook() {
         <div className={`${styles.pageHeroInner} editorial-hero-inner`}>
           <p className={`${styles.heroKicker} editorial-kicker`}>NOVEMBER 2026 · CURRENT BOOK</p>
           <h1>Currently <em>reading.</em></h1>
-          <p className={`${styles.heroSubtitle} editorial-subtitle`}>A good book, great company.</p>
+          <p className={`${styles.heroSubtitle} editorial-subtitle`}>Read with us, if you dare.</p>
         </div>
       </section>
       <div className={styles.contentShell}>

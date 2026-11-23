@@ -104,7 +104,7 @@ function Home() {
         <div className={styles.heroCopy}>
           <p className={styles.heroKicker}>NYC BOOK CLUB</p>
           <h1>A book club<br />for <em>New Yorkers.</em></h1>
-          <p className={styles.heroDescription}>Good books, great conversation,<br />and even better company.</p>
+          <p className={styles.heroDescription}>Hot people read,<br />and we're hot.</p>
           <Link to="/current-book" className={styles.heroButton}>Explore current read <span>→</span></Link>
         </div>
         <aside className={styles.meetupCard}>

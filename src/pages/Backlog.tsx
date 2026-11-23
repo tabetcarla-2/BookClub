@@ -447,7 +447,7 @@ function Backlog() {
 
   return (
     <section className={styles.page}>
-      <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>THE CLUB LIBRARY</p><h1>The <em>backlog.</em></h1><p className="editorial-subtitle">Suggest, vote, and choose our next read.</p></div></section>
+      <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>THE CLUB LIBRARY</p><h1>The <em>backlog.</em></h1><p className="editorial-subtitle">Keep track of books you want to read, and books you don't want to read.</p></div></section>
       <div className={styles.libraryShell}>
       <div className={styles.backlogToolbar}><label className={styles.backlogSearch}><span aria-hidden="true">⌕</span><input type="search" placeholder="Search the backlog..." value={backlogQuery} onChange={(event) => setBacklogQuery(event.target.value)} /></label><button type="button" className="primary-button" onClick={() => setShowSuggestSearch((open) => !open)}>{showSuggestSearch ? 'Close search' : 'Suggest a book'}</button></div>
       {showSuggestSearch && <div className={styles.searchArea}>
