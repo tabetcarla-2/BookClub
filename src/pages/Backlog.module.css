@@ -245,7 +245,7 @@
 .libraryShell .form input { background: var(--paper); border-radius: 999px; }
 .libraryShell .listHeader { margin-top: 23px; padding-top: 18px; border-top: 1px solid #eadfd8; }
 .libraryShell .grid { grid-template-columns: repeat(3, 1fr); gap: 15px; }
-.backlogToolbar { display: flex; align-items: center; gap: 12px; }
+.backlogToolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .backlogSearch { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; padding: 11px 16px; border: 1px solid #e1d5ce; border-radius: 999px; background: var(--paper); color: var(--muted); }
 .backlogSearch span { font-size: 22px; line-height: 1; }
 .backlogSearch input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12px; }

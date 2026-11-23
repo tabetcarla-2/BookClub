@@ -132,8 +132,6 @@ function Backlog() {
   const { user } = useAuth()
   const { books: catalog, addBook } = useBooks()
   const [bookTitle, setBookTitle] = useState('')
-  const [backlogQuery, setBacklogQuery] = useState('')
-  const [showSuggestSearch, setShowSuggestSearch] = useState(false)
   const [selectedView, setSelectedView] = useState<'all' | 'top' | 'to-read'>('all')
   const [selectedBook, setSelectedBook] = useState<BacklogBook | null>(null)
   const [books, setBooks] = useState<BacklogBook[]>([])
@@ -151,15 +149,11 @@ function Backlog() {
   const genreOptions = Array.from(
     new Set(books.map((book) => book.genre?.trim()).filter((genre): genre is string => Boolean(genre))),
   ).sort((a, b) => a.localeCompare(b))
-  const searchedBooks = books.filter((book) => {
-    const query = backlogQuery.trim().toLowerCase()
-    return !query || `${book.title} ${book.author} ${book.genre ?? ''}`.toLowerCase().includes(query)
-  })
   const viewedBooks = selectedView === 'top'
-    ? searchedBooks.filter((book) => (interactions[book.id]?.upvotes ?? 0) > 0)
+    ? books.filter((book) => (interactions[book.id]?.upvotes ?? 0) > 0)
     : selectedView === 'to-read'
-      ? searchedBooks.filter((book) => !interactions[book.id]?.readByMe)
-      : searchedBooks
+      ? books.filter((book) => !interactions[book.id]?.readByMe)
+      : books
   const filteredBooks = selectedGenre === 'all'
     ? viewedBooks
     : viewedBooks.filter((book) => book.genre?.trim() === selectedGenre)
@@ -333,7 +327,7 @@ function Backlog() {
         ...previous,
         [demoBook.id]: previous[demoBook.id] ?? { upvotes: 0, downvotes: 0, userVote: null, readByMe: false, readers: [], comments: [] },
       }))
-      setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false); return
+      setBookTitle(''); setSuggestions([]); setSaving(false); return
     }
 
     // Older accounts may not have a profile row yet, but backlog_items has a
@@ -368,7 +362,7 @@ function Backlog() {
         [addedBook.id]: previous[addedBook.id] ?? { upvotes: 0, downvotes: 0, userVote: null, readByMe: false, readers: [], comments: [] },
       }))
     }
-    setBookTitle(''); setSuggestions([]); setShowSuggestSearch(false); setSaving(false)
+    setBookTitle(''); setSuggestions([]); setSaving(false)
   }
 
   async function removeBook(book: BacklogBook) {
@@ -449,11 +443,10 @@ function Backlog() {
     <section className={styles.page}>
       <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>THE CLUB LIBRARY</p><h1>The <em>backlog.</em></h1><p className="editorial-subtitle">Keep track of books you want to read, and books you don't want to read.</p></div></section>
       <div className={styles.libraryShell}>
-      <div className={styles.backlogToolbar}><label className={styles.backlogSearch}><span aria-hidden="true">⌕</span><input type="search" placeholder="Search the backlog..." value={backlogQuery} onChange={(event) => setBacklogQuery(event.target.value)} /></label><button type="button" className="primary-button" onClick={() => setShowSuggestSearch((open) => !open)}>{showSuggestSearch ? 'Close search' : 'Suggest a book'}</button></div>
-      {showSuggestSearch && <div className={styles.searchArea}>
-        <div className={styles.form}><input type="search" placeholder="Search books by title, author, or ISBN..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} autoFocus /><button className="primary-button" onClick={() => addBookToBacklog()} disabled={saving}>{saving ? 'Adding...' : 'Add book'}</button></div>
+      <div className={styles.searchArea}>
+        <div className={styles.form}><input type="search" placeholder="Suggest a book by title, author, or ISBN..." value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addBookToBacklog()} /><button className="primary-button" onClick={() => addBookToBacklog()} disabled={saving}>{saving ? 'Adding...' : 'Suggest a book'}</button></div>
         {(searching || suggestions.length > 0) && <div className={styles.suggestions} aria-live="polite">{searching && <p className={styles.searchMessage}>Searching Open Library...</p>}{suggestions.map((suggestion) => { const metadata = toBook(suggestion); return <button type="button" className={styles.suggestion} key={suggestion.key} onClick={() => addBookToBacklog(suggestion)}><span className={styles.suggestionCover}>{metadata.cover_url ? <img src={metadata.cover_url} alt="" /> : '—'}</span><span><strong>{metadata.title}</strong><small>{metadata.author} · {metadata.genre}</small></span><span className={styles.addIcon}>+</span></button> })}</div>}
-      </div>}
+      </div>
       {error && <p className={styles.error}>{error}</p>}
       {backlogLoading ? (
         <div className={styles.loading} role="status" aria-live="polite">
