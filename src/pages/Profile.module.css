@@ -41,6 +41,7 @@
 .glanceStats strong { font-family: var(--serif); font-size: 27px; font-weight: 400; }
 .glanceStats small { color: var(--muted); font-family: var(--serif); font-size: 11px; }
 .badgesSection, .activityCard { padding: 20px 25px; }
+.badgesSection { display: flex; flex-direction: column; }
 .cardHeading { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .cardHeading h2 { margin: 0 0 4px; font-family: var(--serif); font-size: 25px; font-weight: 400; }
 .cardHeading p { margin: 0; color: var(--muted); font-family: var(--serif); font-size: 12px; }
@@ -53,7 +54,7 @@
 .badgeTooltip { position: absolute; z-index: 3; left: 50%; bottom: calc(100% + 10px); display: grid; gap: 3px; width: 170px; padding: 9px 11px; border: 1px solid #eadfd8; border-radius: 10px; background: #fffaf6; color: #63534b; box-shadow: 0 10px 24px #49362a22; font-size: 11px; line-height: 1.35; opacity: 0; pointer-events: none; transform: translate(-50%, 4px); transition: opacity .18s ease, transform .18s ease; }
 .badgeTooltip strong { color: #71353a; font-family: var(--serif); font-size: 13px; font-weight: 500; }
 .badgeWrap:hover .badgeTooltip, .badgeWrap:focus-within .badgeTooltip { opacity: 1; transform: translate(-50%, 0); }
-.badgeGuide { margin-top: 2px; padding-top: 0; border-top: 0; }
+.badgeGuide { margin-top: auto; padding-top: 22px; border-top: 0; }
 .badgeGuideHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
 .badgeGuideHeading strong { color: #50443d; font-family: var(--serif); font-size: 14px; font-weight: 500; }
 .badgeGuideHeading span { color: var(--muted); font-size: 10px; }
