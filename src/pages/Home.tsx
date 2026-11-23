@@ -11,19 +11,14 @@ type RsvpMember = { name: string; avatarUrl: string | null }
 type Activity = { id: string; name: string; avatarUrl: string | null; text: string; time: string; timestamp: string }
 
 const fallbackBook: HomeBook = { id: 'demo-current', title: "A Husband's Secret", author: 'Liane Moriarty', cover_url: coverImage, description: 'A seemingly perfect family is upended by a letter that was never meant to be opened.' }
-const fallbackMeetup = { title: 'November book discussion', date: 'Thu, Nov 21', time: '7:00 PM', venue: 'The Rabbit Books & Bar' }
+const fallbackMeetup = { title: 'December book discussion', date: '?', time: 'Time to be decided', venue: 'Location to be decided' }
+const when2MeetUrl = 'https://www.when2meet.com/?40034234-jVcj9'
 
 function shortTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return 'recently'
   const hours = Math.max(1, Math.round((Date.now() - date.getTime()) / 3600000))
   return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`
-}
-
-function formatMeetup(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return { date: fallbackMeetup.date, time: fallbackMeetup.time }
-  return { date: new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date), time: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date) }
 }
 
 function Home() {
@@ -58,8 +53,7 @@ function Home() {
           supabase.from('event_rsvps').select('user_id').eq('event_id', event.id),
           event.venue_id ? supabase.from('venues').select('name').eq('id', event.venue_id).maybeSingle() : Promise.resolve({ data: null }),
         ])
-        const formatted = formatMeetup(event.starts_at)
-        setMeetup({ title: event.title, date: formatted.date, time: formatted.time, venue: venue?.name || 'Location to be decided' })
+        setMeetup({ title: event.title, date: '?', time: 'Time to be decided', venue: venue?.name || 'Location to be decided' })
         setRsvpMembers((rsvps ?? []).map((rsvp) => names.get(rsvp.user_id) ?? { name: 'a member', avatarUrl: null }))
       }
 
@@ -109,13 +103,13 @@ function Home() {
         </div>
         <aside className={styles.meetupCard}>
           <div className={styles.meetupLabel}><CalendarIcon size={17} /><span>NEXT MEETUP</span></div>
-          <h2>{meetup.date}</h2>
+          <h2><a href={when2MeetUrl} target="_blank" rel="noreferrer">Vote for next meetup</a></h2>
           <p>{meetup.time} · {meetup.venue}</p>
           <div className={styles.rsvpPeople}>
             {rsvpMembers.slice(0, 4).map((member, index) => member.avatarUrl ? <img key={`${member.name}-${index}`} src={member.avatarUrl} alt="" /> : <span key={`${member.name}-${index}`}>{member.name.slice(0, 1).toUpperCase()}</span>)}
             <small>{rsvpMembers.length > 0 ? `+${rsvpMembers.length} going` : 'Be the first to RSVP'}</small>
           </div>
-          <Link to="/inspo" className={styles.rsvpLink}>RSVP <span>→</span></Link>
+          <Link to="/inspo" className={styles.rsvpLink}>See meetup details <span>→</span></Link>
         </aside>
       </div>
     </section>

@@ -36,7 +36,9 @@
 
 .meetupCard { width: 300px; flex: 0 0 300px; margin-top: 58px; padding: 28px; border-radius: 20px; background: rgb(255 250 246 / 0.94); color: var(--ink); box-shadow: 0 20px 50px rgb(0 0 0 / 0.18); }
 .meetupLabel { display: flex; align-items: center; gap: 10px; color: #675952; }
-.meetupCard h2 { margin: 16px 0 4px; font-family: var(--serif); font-size: 2rem; font-weight: 500; letter-spacing: -0.04em; }
+.meetupCard h2 { margin: 16px 0 4px; font-family: var(--serif); font-size: 1.65rem; font-weight: 500; letter-spacing: -0.04em; }
+.meetupCard h2 a { color: inherit; text-decoration: none; }
+.meetupCard h2 a:hover { color: var(--burgundy); }
 .meetupCard > p { margin: 0; color: #756861; font-size: 0.84rem; }
 .rsvpPeople { display: flex; align-items: center; margin: 26px 0 23px; }
 .rsvpPeople img, .rsvpPeople span { width: 30px; height: 30px; margin-left: -8px; border: 2px solid #fffaf6; border-radius: 50%; object-fit: cover; background: #d4c2b8; color: #4d3931; display: grid; place-items: center; font-size: 0.7rem; font-weight: 700; }
