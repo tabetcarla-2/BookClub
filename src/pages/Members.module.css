@@ -73,8 +73,8 @@
 .profileSectionHeading h3 { margin-bottom: 0; }
 .profileSectionHeading h3 span { color: #9e5d5d; font-family: 'DM Mono', monospace; font-size: 11px; }
 .badgeShelf { display: flex; gap: 10px; overflow-x: auto; padding: 14px 2px 2px; }
-.bookBadge { display: grid; place-items: center; width: 48px; height: 58px; flex: 0 0 48px; overflow: hidden; border: 3px solid #f1d9c6; border-radius: 50%; background: #f6e7d9; box-shadow: 0 3px 8px #49362a18; color: #8b4b3d; }
-.bookBadge img { width: 100%; height: 100%; object-fit: cover; }
+.bookBadge { display: grid; place-items: center; width: 66px; height: 66px; flex: 0 0 66px; overflow: hidden; border: 3px solid #f1d9c6; border-radius: 50%; background: #f6e7d9; box-shadow: 0 3px 8px #49362a18; color: #8b4b3d; }
+.bookBadge img { width: 100%; height: 100%; object-fit: contain; }
 .recentRead { display: flex; align-items: center; gap: 11px; padding: 10px 2px; border-bottom: 1px solid #bfaea433; }
 .recentRead img, .recentPlaceholder { display: grid; place-items: center; width: 38px; height: 50px; flex: 0 0 38px; border-radius: 4px; background: #ead5c6; color: #8b4b3d; object-fit: cover; }
 .recentRead > div:last-child { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; min-width: 0; width: 100%; }
