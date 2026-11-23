@@ -28,6 +28,7 @@ function Profile() {
   const [currentBook, setCurrentBook] = useState<Book | null>(null)
   const [currentProgress, setCurrentProgress] = useState<{ progress: number; status: string; updated_at?: string } | null>(null)
   const [badges, setBadges] = useState<Badge[]>([])
+  const [assignedBadgeKeys, setAssignedBadgeKeys] = useState<Set<string>>(new Set())
   const [activity, setActivity] = useState<Activity[]>([])
   const [stats, setStats] = useState({ booksRead: 0, averageRating: null as number | null, meetups: 0 })
   const [loading, setLoading] = useState(true)
@@ -61,7 +62,7 @@ function Profile() {
       } catch {
         // Cache is an instant preview only; Supabase remains the source of truth.
       }
-      const [profileResult, currentResult, clubBooksResult, completedResult, reviewsResult, visitsResult, votesResult, commentsResult, progressActivityResult, backlogItemsResult] = await Promise.all([
+      const [profileResult, currentResult, clubBooksResult, completedResult, reviewsResult, visitsResult, votesResult, commentsResult, progressActivityResult, backlogItemsResult, assignedBadgesResult] = await Promise.all([
         supabase.from('profiles').select('full_name, username, avatar_url').eq('id', user.id).maybeSingle(),
         supabase.from('club_books').select('book_id').eq('is_current', true).limit(1).maybeSingle(),
         supabase.from('club_books').select('book_id, is_current'),
@@ -72,10 +73,11 @@ function Profile() {
         supabase.from('book_comments').select('book_id, created_at').eq('user_id', user.id),
         supabase.from('reading_progress').select('book_id, progress, status, updated_at').eq('user_id', user.id),
         supabase.from('backlog_items').select('book_id, created_at').eq('user_id', user.id),
+        supabase.from('profile_badges').select('badge_key').eq('user_id', user.id),
       ])
       if (cancelled) return
-      if (profileResult.error || currentResult.error || clubBooksResult.error || completedResult.error || reviewsResult.error || visitsResult.error || votesResult.error || commentsResult.error || progressActivityResult.error || backlogItemsResult.error) {
-        setError(profileResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || votesResult.error?.message || commentsResult.error?.message || progressActivityResult.error?.message || backlogItemsResult.error?.message || 'Unable to load your profile.')
+      if (profileResult.error || currentResult.error || clubBooksResult.error || completedResult.error || reviewsResult.error || visitsResult.error || votesResult.error || commentsResult.error || progressActivityResult.error || backlogItemsResult.error || assignedBadgesResult.error) {
+        setError(profileResult.error?.message || currentResult.error?.message || clubBooksResult.error?.message || completedResult.error?.message || reviewsResult.error?.message || visitsResult.error?.message || votesResult.error?.message || commentsResult.error?.message || progressActivityResult.error?.message || backlogItemsResult.error?.message || assignedBadgesResult.error?.message || 'Unable to load your profile.')
         setLoading(false)
         return
       }
@@ -110,6 +112,7 @@ function Profile() {
       if (booksResult.error || currentProgressResult.error) { setError(booksResult.error?.message || currentProgressResult.error?.message || 'Unable to load your books.'); setLoading(false); return }
       const booksById = new Map((booksResult.data ?? []).map((book) => [book.id, book]))
       const reviews = reviewsResult.data ?? []
+      setAssignedBadgeKeys(new Set((assignedBadgesResult.data ?? []).map((badge) => badge.badge_key)))
       const reviewsByBook = new Map(reviews.map((review) => [review.book_id, review]))
       const bookBadges = readIds.map((bookId) => { const book = booksById.get(bookId); if (!book) return null; const review = reviewsByBook.get(bookId); return { book: { ...book, cover_url: book.cover_url || (book.title.toLowerCase() === 'parable of the sower' ? parablePlaceholder : null) }, badgeUrl: book.title.toLowerCase() === 'parable of the sower' ? parableBadge : null, rating: review?.rating ?? null, review: review?.comment ?? null } }).filter((badge): badge is Badge => Boolean(badge))
       const current = currentBookId ? booksById.get(currentBookId) : null
@@ -217,9 +220,9 @@ function Profile() {
   const hasMeetingBadge = stats.meetups > 0 || ['carla', 'misha'].includes(displayName.trim().toLowerCase())
   const earnedTitles = new Set(badges.map((badge) => badge.book.title.trim().toLowerCase()))
   const earnableBadges: EarnableBadge[] = [
-    { id: 'parable-of-the-sower', title: 'Parable of the Sower', description: 'Finish Parable of the Sower with the club.', image: parableBadge, earned: earnedTitles.has('parable of the sower') },
-    { id: 'husbands-secret', title: "A Husband's Secret", description: "Finish A Husband's Secret with the club.", image: husbandsSecretBadge, earned: earnedTitles.has("a husband's secret") },
-    { id: 'club-meeting', title: 'Book club meeting', description: 'Attend a book club meeting.', image: clubMeetingBadge, earned: hasMeetingBadge },
+    { id: 'parable-of-the-sower', title: 'Parable of the Sower', description: 'Finish Parable of the Sower with the club.', image: parableBadge, earned: earnedTitles.has('parable of the sower') || assignedBadgeKeys.has('parable-of-the-sower') },
+    { id: 'husbands-secret', title: "A Husband's Secret", description: "Finish A Husband's Secret with the club.", image: husbandsSecretBadge, earned: earnedTitles.has("a husband's secret") || assignedBadgeKeys.has('husbands-secret') },
+    { id: 'club-meeting', title: 'Book club meeting', description: 'Attend a book club meeting.', image: clubMeetingBadge, earned: hasMeetingBadge || assignedBadgeKeys.has('club-meeting') },
   ]
   const definedBadgeTitles = new Set(earnableBadges.map((badge) => badge.title.toLowerCase()))
   const additionalEarnedBadges: EarnableBadge[] = badges

@@ -24,9 +24,17 @@ export interface Database {
       venue_ratings: { Row: { venue_id: string; user_id: string; rating: number; created_at: string; updated_at: string }; Insert: { venue_id: string; user_id: string; rating: number; created_at?: string; updated_at?: string }; Update: { rating?: number; updated_at?: string }; Relationships: [] }
       events: { Row: { id: string; club_id: string; title: string; starts_at: string; venue_id: string | null; notes: string | null; created_by: string; created_at: string }; Insert: { id?: string; club_id: string; title: string; starts_at: string; venue_id?: string | null; notes?: string | null; created_by: string; created_at?: string }; Update: { title?: string; starts_at?: string; venue_id?: string | null; notes?: string | null }; Relationships: [] }
       event_rsvps: { Row: { event_id: string; user_id: string; created_at: string }; Insert: { event_id: string; user_id: string; created_at?: string }; Update: EmptyUpdate; Relationships: [] }
+      badges: { Row: { key: string; title: string; description: string; created_at: string }; Insert: { key: string; title: string; description: string; created_at?: string }; Update: { title?: string; description?: string }; Relationships: [] }
+      profile_badges: { Row: { user_id: string; badge_key: string; awarded_at: string }; Insert: { user_id: string; badge_key: string; awarded_at?: string }; Update: EmptyUpdate; Relationships: [] }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      admin_set_current_book: { Args: { target_book_id: string; target_starts_on?: string; target_ends_on?: string | null }; Returns: string }
+      admin_finish_current_book: { Args: { target_ends_on?: string }; Returns: number }
+      admin_assign_badge: { Args: { target_user_id: string; target_badge_key: string }; Returns: undefined }
+      admin_remove_badge: { Args: { target_user_id: string; target_badge_key: string }; Returns: undefined }
+      admin_delete_user: { Args: { target_user_id: string }; Returns: undefined }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

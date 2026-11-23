@@ -29,7 +29,7 @@ function Navbar() {
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null
   const initials = displayName.slice(0, 1).toUpperCase()
 
-  const imagePage = ['/', '/current-book', '/backlog', '/members', '/inspo', '/profile'].includes(location.pathname)
+  const imagePage = ['/', '/current-book', '/backlog', '/members', '/inspo', '/profile', '/admin'].includes(location.pathname)
 
   return (
     <header className={`${styles.header} ${imagePage ? styles.heroHeader : ''}`}>
@@ -53,6 +53,7 @@ function Navbar() {
       </nav>
 
       <div className={styles.account}>
+        {user?.email?.toLowerCase() === 'tabet.carla@gmail.com' && <NavLink to="/admin" className={styles.navLink}>Admin</NavLink>}
         <NavLink to="/profile" className={styles.profileLink}>
           {avatarUrl ? <img className={styles.avatar} src={avatarUrl} alt={`${displayName}'s profile`} /> : <span className={styles.avatar}>{initials}</span>}
           <span className={styles.accountText}><strong>My profile</strong><small>{displayName}</small></span>

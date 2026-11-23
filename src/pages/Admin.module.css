@@ -1,0 +1,36 @@
+.page { min-height: 100vh; padding-bottom: 80px; background: var(--cream); color: var(--ink); }
+.hero { min-height: 300px; padding: 78px max(6vw, calc((100vw - 1080px) / 2)) 90px; color: #fff; background: linear-gradient(90deg, rgb(23 18 14 / .88), rgb(23 18 14 / .32) 60%, rgb(23 18 14 / .14)), url('../assets/nyc-hero.png') center 43% / cover; }
+.hero h1 { margin: 0; color: #fff; font-family: var(--serif); font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 400; letter-spacing: -.06em; }
+.hero h1 em { color: #d6aaa7; }
+.shell { position: relative; z-index: 2; display: grid; gap: 16px; width: min(1080px, calc(100% - 48px)); margin: -42px auto 0; }
+.card { padding: 24px 26px; border: 1px solid #eadfd8; border-radius: 18px; background: rgb(255 250 246 / .97); box-shadow: 0 15px 40px rgb(38 26 20 / .08); }
+.cardHeading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.cardHeading h2 { margin: 2px 0 0; font-family: var(--serif); font-size: 25px; font-weight: 400; }
+.cardHeading > span { color: var(--muted); font-family: var(--serif); font-size: 12px; text-align: right; }
+.controls, .bookForm { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.controls label, .bookForm label { display: grid; flex: 1 1 180px; gap: 6px; color: var(--muted); font-size: 10px; }
+.controls select, .controls input, .bookForm input, .bookForm textarea { width: 100%; box-sizing: border-box; border: 1px solid #d9ccc4; border-radius: 12px; padding: 11px 12px; outline: 0; background: var(--paper); color: var(--ink); font: inherit; font-size: 12px; }
+.controls select:focus, .controls input:focus, .bookForm input:focus, .bookForm textarea:focus { border-color: #a34042; }
+.controls button { white-space: nowrap; }
+.secondaryButton, .deleteButton, .assigned, .unassigned { border: 1px solid #d9c2bb; border-radius: 999px; padding: 10px 14px; background: transparent; color: #71353a; font: inherit; font-size: 11px; cursor: pointer; }
+.secondaryButton:hover, .deleteButton:hover { background: #f4e5df; }
+.bookForm .wide { flex: 1 1 100%; }
+.bookForm textarea { resize: vertical; }
+.message, .error { margin: 0; padding: 11px 14px; border-radius: 12px; font-size: 12px; }
+.message { background: #e3ebd5; color: #52623c; }
+.error { background: #f5dfdc; color: #8b3436; }
+.memberList { display: grid; gap: 10px; }
+.memberRow { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(300px, 2fr) auto; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #eadfd8; }
+.memberIdentity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.memberIdentity img, .memberIdentity > span { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; object-fit: cover; background: #dfc6bc; color: #71353a; font-family: var(--serif); font-size: 16px; }
+.memberIdentity div { display: grid; min-width: 0; gap: 2px; }
+.memberIdentity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--serif); font-size: 14px; font-weight: 500; }
+.memberIdentity small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.badgeActions { display: flex; flex-wrap: wrap; gap: 6px; }
+.assigned { border-color: #a34042; background: #f3d5d0; color: #71353a; }
+.unassigned { border-color: #ddd0c8; color: var(--muted); }
+.deleteButton { border-color: #e1c4bf; color: #9b4547; font-size: 10px; white-space: nowrap; }
+.denied { display: grid; min-height: 70vh; place-content: center; justify-items: center; padding: 30px; background: var(--cream); color: var(--ink); text-align: center; }
+.denied h1 { margin: 8px 0; font-family: var(--serif); font-size: 42px; font-weight: 400; }
+.denied p:last-child { color: var(--muted); }
+@media (max-width: 760px) { .shell { width: calc(100% - 28px); } .memberRow { grid-template-columns: 1fr; gap: 9px; } .deleteButton { justify-self: start; } }
