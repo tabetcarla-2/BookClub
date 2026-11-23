@@ -10,7 +10,7 @@ import styles from './Members.module.css'
 type StatusKey = 'completed' | 'reading' | 'notStarted' | 'skipping'
 type Badge = { id: string; title: string; author: string; coverUrl?: string | null; badgeUrl?: string | null; rating: number | null; kind?: 'book' | 'milestone' }
 type Member = { id: string; name: string; username: string; avatarUrl?: string | null; status: string; statusKey: StatusKey; progress: number; booksRead: number; averageRating: number | null; completionRate: number; badges: Badge[] }
-type Leader = Pick<Member, 'id' | 'name' | 'avatarUrl' | 'booksRead'>
+type Leader = Pick<Member, 'id' | 'name' | 'avatarUrl' | 'booksRead' | 'progress' | 'statusKey'>
 type ClubStats = { memberCount: number; booksRead: number; averageRating: number | null }
 
 const emptyStats: ClubStats = { memberCount: 0, booksRead: 0, averageRating: null }
@@ -21,6 +21,16 @@ function statusFor(progress: number | undefined, status: string | undefined): { 
   if (status === 'skipping') return { status: 'Skipping', statusKey: 'skipping' }
   if (status === 'reading' && (progress ?? 0) > 0) return { status: 'In progress', statusKey: 'reading' }
   return { status: 'Not started', statusKey: 'notStarted' }
+}
+
+function readerScore(reader: Leader) {
+  const currentProgress = reader.statusKey === 'reading' ? reader.progress : 0
+  return reader.booksRead * 100 + currentProgress
+}
+
+function readerRank(readers: Leader[], index: number) {
+  const score = readerScore(readers[index])
+  return readers.findIndex((reader) => readerScore(reader) === score) + 1
 }
 
 function Members() {
@@ -114,7 +124,7 @@ function Members() {
       const allBookIds = new Set(clubCompletedRows.map((row) => row.book_id))
       const allRatings = reviewRows.map((row) => row.rating)
       const stats: ClubStats = { memberCount: nextMembers.length, booksRead: allBookIds.size, averageRating: allRatings.length ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length : null }
-      const leaders = [...nextMembers].sort((a, b) => b.booksRead - a.booksRead || a.name.localeCompare(b.name)).slice(0, 5)
+      const leaders = [...nextMembers].sort((a, b) => readerScore(b) - readerScore(a) || a.name.localeCompare(b.name))
       const currentBook = currentBookId ? booksById.get(currentBookId) : null
       const nextTitle = currentBook?.title || 'The current club read'
       setMembers(nextMembers); setClubStats(stats); setCurrentBookTitle(nextTitle); setTopReaders(leaders); setLoading(false)
@@ -142,7 +152,7 @@ function Members() {
       <aside className={styles.sidebar}>
         <section className={styles.sideCard}><h2>The Club at a <em>glance.</em></h2><div className={styles.glanceRows}><div><span>♧</span><strong>{clubStats.memberCount}</strong><small>members</small></div><div><span>▤</span><strong>{clubStats.booksRead}</strong><small>books read together</small></div><div><span>☆</span><strong>{formatRating(clubStats.averageRating)}</strong><small>average rating</small></div></div></section>
         <section className={styles.sideCard}><h2>Current book <em>progress.</em></h2><p className={styles.currentBookName}>{currentBookTitle}</p><div className={styles.progressLine}><span style={{ width: `${currentAverage}%` }} /></div><strong className={styles.progressNumber}>{currentAverage}%</strong><div className={styles.countPills}><span className={styles.completed}>✓ &nbsp;{currentCounts.completed} completed</span><span className={styles.reading}>▥ &nbsp;{currentCounts.reading} in progress</span><span className={styles.notStarted}>○ &nbsp;{currentCounts.notStarted} not started</span><span className={styles.skipping}>× &nbsp;{currentCounts.skipping} skipping</span></div></section>
-        <section className={styles.sideCard}><h2>Top <em>readers.</em></h2><ol className={styles.leaderList}>{topReaders.map((reader, index) => <li key={reader.id}><span className={styles.rank}>{index + 1}</span>{reader.avatarUrl ? <img src={reader.avatarUrl} alt="" /> : <span className={styles.miniAvatar}>{reader.name.slice(0, 1)}</span>}<strong>{reader.name}</strong><small>{reader.booksRead} read{reader.booksRead === 1 ? '' : 's'}</small></li>)}</ol></section>
+        <section className={styles.sideCard}><h2>Top <em>readers.</em></h2><ol className={styles.leaderList}>{topReaders.map((reader, index) => <li key={reader.id}><span className={styles.rank}>{readerRank(topReaders, index)}</span>{reader.avatarUrl ? <img src={reader.avatarUrl} alt="" /> : <span className={styles.miniAvatar}>{reader.name.slice(0, 1)}</span>}<strong>{reader.name}</strong><small>{reader.booksRead} read{reader.booksRead === 1 ? '' : 's'}{reader.statusKey === 'reading' && reader.progress > 0 ? ` · ${reader.progress}% current` : ''}</small></li>)}</ol></section>
       </aside>
     </div>
     {selectedMember && <div className={styles.profileBackdrop} role="presentation" onClick={() => setSelectedMember(null)}><section className={styles.profileModal} role="dialog" aria-modal="true" aria-labelledby="member-profile-title" onClick={(event) => event.stopPropagation()}>
