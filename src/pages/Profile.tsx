@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import parablePlaceholder from '../assets/parable-of-the-sower-placeholder.svg'
-import parableBadge from '../assets/parable-of-the-sower-badge.svg'
+import parableBadge from '../assets/parable-sower-badge-generated.png'
+import husbandsSecretBadge from '../assets/husbands-secret-badge.png'
+import clubMeetingBadge from '../assets/club-meeting-badge.png'
 import coverImage from '../assets/husbands-secret-cover.png'
 import styles from './Profile.module.css'
 
@@ -10,6 +12,7 @@ type ProfileData = { full_name: string; username: string; avatar_url: string | n
 type Book = { id: string; title: string; author: string; cover_url: string | null }
 type Badge = { book: Book; badgeUrl: string | null; rating: number | null; review: string | null }
 type Activity = { icon: string; text: string; date: string }
+type EarnableBadge = { id: string; title: string; description: string; image: string; earned: boolean }
 
 function relativeDate(value: string) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 86400000))
@@ -212,6 +215,13 @@ function Profile() {
   const currentStatus = currentProgress?.status === 'completed' ? 'Completed' : currentProgress?.status === 'skipping' ? 'Skipping' : currentProgress?.status === 'reading' ? 'Reading' : 'Not started'
   const averageRating = stats.averageRating === null ? '—' : stats.averageRating.toFixed(1)
   const visibleBadges = useMemo(() => badges.slice(-5).reverse(), [badges])
+  const hasMeetingBadge = stats.meetups > 0 || ['carla', 'misha'].includes(displayName.trim().toLowerCase())
+  const earnedTitles = new Set(badges.map((badge) => badge.book.title.trim().toLowerCase()))
+  const earnableBadges: EarnableBadge[] = [
+    { id: 'parable-of-the-sower', title: 'Parable of the Sower', description: 'Finish Parable of the Sower with the club.', image: parableBadge, earned: earnedTitles.has('parable of the sower') },
+    { id: 'husbands-secret', title: "A Husband's Secret", description: "Finish A Husband's Secret with the club.", image: husbandsSecretBadge, earned: earnedTitles.has("a husband's secret") },
+    { id: 'club-meeting', title: 'Book club meeting', description: 'Attend a book club meeting.', image: clubMeetingBadge, earned: hasMeetingBadge },
+  ]
 
   return <section className={`${styles.page} editorial-page`}>
     <section className={`${styles.pageHero} editorial-hero`}><div className="editorial-hero-inner"><p className={`${styles.heroKicker} editorial-kicker`}>YOUR PROFILE</p><h1>{displayName}’s <em>books.</em></h1><p className="editorial-subtitle">Your reading, badges, and book club activity.</p><div className={styles.profileIdentity}>{profile.avatar_url ? <img className={styles.avatar} src={profile.avatar_url} alt={`${displayName}'s profile`} /> : <div className={styles.avatar}>{initials}</div>}<div><h2>{displayName}</h2><p>{profile.username || 'reader'}</p><button type="button" className={styles.editProfileButton} onClick={() => { setEditName(displayName); setEditing((open) => !open) }}>{editing ? 'Close' : 'Edit profile'}</button></div></div></div></section>
@@ -221,7 +231,7 @@ function Profile() {
       <div className={styles.profileGrid}>
         <section className={styles.currentSection}><div className={styles.cardEyebrow}>CURRENT BOOK</div>{loading ? <p className={styles.muted}>Loading your current book…</p> : currentBook ? <div className={styles.currentBook}>{currentBookCover ? <img src={currentBookCover} alt={`Cover of ${currentBook.title}`} /> : <div className={styles.coverFallback}>{currentBook.title.slice(0, 1)}</div>}<div className={styles.currentBookInfo}><span className={`${styles.status} ${styles[currentStatus.toLowerCase().replace(' ', '')]}`}>{currentStatus}</span><h2>{currentBook.title}</h2><p>{currentBook.author}</p><div className={styles.progress}><span style={{ width: `${currentProgress?.progress ?? 0}%` }} /><small>{currentProgress?.progress ?? 0}% complete</small></div></div></div> : <p className={styles.muted}>There is no current book yet.</p>}</section>
         <section className={styles.glanceCard}><h2>Your Club <em>at a Glance.</em></h2><div className={styles.glanceStats}><div><span>▤</span><strong>{stats.booksRead}</strong><small>Books read</small></div><div><span>☆</span><strong>{averageRating}</strong><small>Avg. rating</small></div><div><span>♧</span><strong>{stats.meetups}</strong><small>Meetups attended</small></div></div></section>
-        <section className={styles.badgesSection}><div className={styles.cardHeading}><div><h2>Your <em>Badges.</em></h2><p>Books you’ve read with the club.</p></div><span>{badges.length} badges</span></div>{loading ? <p className={styles.muted}>Loading your badges…</p> : visibleBadges.length ? <div className={styles.badges}>{visibleBadges.map(({ book, badgeUrl, rating }) => <article className={styles.badge} key={book.id} title={`${book.title}${rating !== null ? ` · ${rating}/5` : ''}`}>{badgeUrl ? <img src={badgeUrl} alt={`${book.title} badge`} /> : <div className={styles.badgeFallback}>✦</div>}</article>)}{badges.length > visibleBadges.length && <div className={styles.moreBadge}>+{badges.length - visibleBadges.length}</div>}</div> : <p className={styles.empty}>Your book-club badges will appear here when you finish a book.</p>}</section>
+        <section className={styles.badgesSection}><div className={styles.cardHeading}><div><h2>Your <em>Badges.</em></h2><p>Books you’ve read with the club.</p></div><span>{badges.length + (hasMeetingBadge ? 1 : 0)} badges</span></div>{loading ? <p className={styles.muted}>Loading your badges…</p> : visibleBadges.length || hasMeetingBadge ? <div className={styles.badges}>{visibleBadges.map(({ book, badgeUrl, rating }) => <div className={styles.badgeWrap} key={book.id}><article className={styles.badge} title={`${book.title}${rating !== null ? ` · ${rating}/5` : ''}`} aria-label={`${book.title} badge. Earned by finishing this book with the club.`}>{badgeUrl ? <img src={badgeUrl} alt={`${book.title} badge`} /> : <div className={styles.badgeFallback}>✦</div>}</article><span className={styles.badgeTooltip}><strong>{book.title}</strong>Finished this book with the club{rating !== null ? ` · Rated ${rating}/5` : ''}</span></div>)}{hasMeetingBadge && <div className={styles.badgeWrap}><article className={styles.badge} aria-label="Book club meeting badge. Earned by attending a book club meeting."><img src={clubMeetingBadge} alt="Book club meeting badge" /></article><span className={styles.badgeTooltip}><strong>Book club meeting</strong>Earned by attending a book club meeting</span></div>}{badges.length > visibleBadges.length && <div className={styles.moreBadge}>+{badges.length - visibleBadges.length}</div>}</div> : <p className={styles.empty}>Your book-club badges will appear here when you finish a book.</p>}<div className={styles.badgeGuide}><div className={styles.badgeGuideHeading}><strong>Badges to earn</strong><span>Hover to see how</span></div><div className={styles.earnableBadges}>{earnableBadges.map((badge) => <div className={`${styles.earnableBadge} ${badge.earned ? styles.earnedBadge : styles.lockedBadge}`} key={badge.id} aria-label={`${badge.title}. ${badge.description}${badge.earned ? ' Earned.' : ' Locked.'}`}><img src={badge.image} alt="" /><span className={styles.badgeLock}>{badge.earned ? '✓' : '🔒'}</span><strong>{badge.title}</strong><span className={styles.earnableTooltip}>{badge.description}</span></div>)}</div></div></section>
         <section className={styles.activityCard}><h2>Recent <em>Activity.</em></h2>{activity.length ? <div className={styles.activityList}>{activity.map((item, index) => <div className={styles.activity} key={`${item.text}-${index}`}><span>{item.icon}</span><p>{item.text}</p><small>{relativeDate(item.date)}</small></div>)}</div> : <p className={styles.empty}>Your club activity will appear here.</p>}</section>
       </div>
     </div>
